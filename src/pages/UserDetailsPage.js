@@ -104,7 +104,7 @@ function UserDetailsPage() {
   const handleDeleteSimulation = async (simId) => {
     if (window.confirm('Ești sigur că vrei să ștergi acest rezultat al simulării? Această acțiune este ireversibilă.')) {
       try {
-        await axios.delete(`http://localhost:5000/api/simulations/${simId}`);
+        await axios.delete(`https://aplicatie-evidenta-backend.onrender.com/api/simulations/${simId}`);
         alert('Rezultat șters cu succes!');
         fetchUserDetails();
       } catch (err) {
