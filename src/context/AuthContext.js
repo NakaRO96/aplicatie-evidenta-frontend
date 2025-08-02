@@ -6,7 +6,7 @@ const AuthContext = createContext(null);
 
 // Placeholder pentru URL-ul public al backend-ului
 // SCHIMBĂRI AICI: Am înlocuit "http://localhost:5000" cu adresa reală a backend-ului tău.
-const BACKEND_URL = "https://backend.fabricadepolitisti-curs.ro";
+const BACKEND_URL = "https://aplicatie-evidenta-backend.onrender.com";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
