@@ -19,7 +19,7 @@ function ClientDashboard() {
     try {
       // Folosește ID-ul user-ului autentificat pentru a cere datele proprii
       // AICI S-A FĂCUT MODIFICAREA: De la localhost la subdomeniul backend-ului
-      const res = await axios.get(`http://backend.fabricadepolitisti-curs.ro/api/users/${authUser.id}`);
+      const res = await axios.get(`https://aplicatie-evidenta-backend.onrender.com`);
       setUser(res.data.user);
       setSimulationResults(res.data.simulationResults);
     } catch (err) {

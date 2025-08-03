@@ -85,7 +85,7 @@ function UserDetailsPage() {
     const updatedAttendance = user.attendance ? [...user.attendance, newAttendanceEntry] : [newAttendanceEntry];
 
     try {
-      await axios.put(`http://localhost:5000/api/users/${id}`, { attendance: updatedAttendance });
+      await axios.put(`https://aplicatie-evidenta-backend.onrender.com`, { attendance: updatedAttendance });
       alert('Prezență adăugată cu succes!');
       setAttendanceDate('');
       fetchUserDetails();
