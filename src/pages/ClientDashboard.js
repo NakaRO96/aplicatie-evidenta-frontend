@@ -6,25 +6,30 @@ import { useNavigate } from 'react-router-dom';
 function ClientDashboard() {
   const [user, setUser] = useState(null);
   const [simulationResults, setSimulationResults] = useState([]);
-  const { user: authUser, logout } = useAuth(); // Obținem user-ul autentificat din context
+  const { user: authUser, logout } = useAuth();
   const navigate = useNavigate();
 
+  // Adresă backend configurată
+  const BACKEND_URL = 'https://aplicatie-evidenta-backend.onrender.com';
+
   const fetchClientData = async () => {
-    // Asigură-te că user-ul autentificat și ID-ul său există înainte de a face cererea
     if (!authUser || !authUser.id) {
       console.warn('Auth user ID not available. Cannot fetch client data.');
       return;
     }
 
     try {
-      // Folosește ID-ul user-ului autentificat pentru a cere datele proprii
-      // AICI S-A FĂCUT MODIFICAREA: De la localhost la subdomeniul backend-ului
-      const res = await axios.get(`https://aplicatie-evidenta-backend.onrender.com`);
+      // Am corectat adresa API și am adăugat token-ul de autentificare
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${BACKEND_URL}/api/users/${authUser.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setUser(res.data.user);
       setSimulationResults(res.data.simulationResults);
     } catch (err) {
       console.error('Eroare la preluarea datelor clientului:', err);
-      // GESTIONARE EROARE: ex. token expirat (401 Unauthorized)
       if (err.response && err.response.status === 401) {
         logout();
         navigate('/login');
@@ -37,11 +42,11 @@ function ClientDashboard() {
 
   useEffect(() => {
     fetchClientData();
-  }, [authUser]); // Reîncarcă datele dacă user-ul autentificat se schimbă
+  }, [authUser]);
 
   const handleLogout = () => {
-    logout(); // Apeleză funcția de logout din context
-    navigate('/login'); // Redirecționează la pagina de login
+    logout();
+    navigate('/login');
   };
 
   if (!user) {
@@ -51,6 +56,16 @@ function ClientDashboard() {
       </div>
     );
   }
+
+  // Helper function to format time in HH:MM:SS or MM:SS
+  const formatSecondsToMMSS = (totalSeconds) => {
+    if (totalSeconds === null || totalSeconds === undefined) {
+      return '-';
+    }
+    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+    const seconds = String(Math.floor(totalSeconds % 60)).padStart(2, '0');
+    return `${minutes}:${seconds}`;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200 p-4 sm:p-6 lg:p-8 font-sans antialiased">
@@ -112,11 +127,8 @@ function ClientDashboard() {
                     <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700">Timp Brut</th>
                     <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700">Penalizări (s)</th>
                     <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700">Timp Total</th>
-                    {/* NOUA ORDINE: Timpi Jaloane */}
-                    <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700">Timpi Jaloane</th>
-                    {/* NOUA ORDINE: Obstacole Penalizate */}
+                    <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700">Timp Jaloane</th>
                     <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700">Obstacole Penalizate</th>
-                    {/* NOUA ORDINE: Obstacole Eliminate */}
                     <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700">Obstacole Eliminate</th>
                   </tr>
                 </thead>
@@ -124,34 +136,16 @@ function ClientDashboard() {
                   {simulationResults.map((result) => (
                     <tr key={result._id} className="border-b border-gray-200 hover:bg-blue-50 transition-colors duration-150">
                       <td className="py-3 px-4 sm:px-6">{new Date(result.date).toLocaleDateString('ro-RO')}</td>
-                      <td className="py-3 px-4 sm:px-6">
-                        {Math.floor(result.rawTime / 60).toString().padStart(2, '0')}:
-                        {(result.rawTime % 60).toFixed(2).padStart(5, '0')}
-                      </td>
+                      <td className="py-3 px-4 sm:px-6 font-mono">{formatSecondsToMMSS(result.rawTime)}</td>
                       <td className="py-3 px-4 sm:px-6">{result.penaltyTime}s</td>
-                      <td className="py-3 px-4 sm:px-6 font-semibold text-blue-700">
-                        {Math.floor(result.totalTime / 60).toString().padStart(2, '0')}:
-                        {(result.totalTime % 60).toFixed(2).padStart(5, '0')}
-                      </td>
-                      {/* NOUA ORDINE: Afișarea Timpilor Jaloane */}
-                      <td className="py-3 px-4 sm:px-6">
+                      <td className="py-3 px-4 sm:px-6 font-mono font-bold text-blue-700">{formatSecondsToMMSS(result.totalTime)}</td>
+                      <td className="py-3 px-4 sm:px-6 font-mono">
                         {result.checkpointTimes && result.checkpointTimes.length > 0
-                          ? result.checkpointTimes.map(time => {
-                              const minutes = Math.floor(time / 60);
-                              const seconds = (time % 60).toFixed(2).padStart(5, '0');
-                              return `${minutes.toString().padStart(2, '0')}:${seconds}`;
-                            }).join('; ')
-                          : '-'
-                        }
+                          ? result.checkpointTimes.map(time => formatSecondsToMMSS(time)).join('; ')
+                          : '-'}
                       </td>
-                      {/* NOUA ORDINE: Afișarea Obstacolelor Penalizate */}
-                      <td className="py-3 px-4 sm:px-6">{result.penaltiesList.join(', ') || '-'}</td>
-                      {/* NOUA ORDINE: Afișarea Obstacolelor Eliminate */}
-                      <td className="py-3 px-4 sm:px-6">{result.eliminatedObstacles && result.eliminatedObstacles.length > 0
-                          ? result.eliminatedObstacles.join(', ')
-                          : '-'
-                        }
-                      </td>
+                      <td className="py-3 px-4 sm:px-6">{result.penaltiesList?.length > 0 ? result.penaltiesList.join(', ') : '-'}</td>
+                      <td className="py-3 px-4 sm:px-6">{result.eliminatedObstaclesList?.length > 0 ? result.eliminatedObstaclesList.join(', ') : '-'}</td>
                     </tr>
                   ))}
                 </tbody>

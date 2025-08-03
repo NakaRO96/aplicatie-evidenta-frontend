@@ -16,9 +16,16 @@ function UserDetailsPage() {
   const { logout } = useAuth(); // Obține funcția de logout din context
   const navigate = useNavigate();
 
+  const BACKEND_URL = 'https://aplicatie-evidenta-backend.onrender.com';
+
   const fetchUserDetails = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/users/${id}`);
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${BACKEND_URL}/api/users/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setUser(res.data.user);
       setSimulationResults(res.data.simulationResults);
       setEditedUser(res.data.user); // Inițializează datele editabile
@@ -47,10 +54,15 @@ function UserDetailsPage() {
     }
 
     try {
-      await axios.put(`http://localhost:5000/api/users/${id}`, {
+      const token = localStorage.getItem('token');
+      await axios.put(`${BACKEND_URL}/api/users/${id}`, {
         name: editedUser.name,
         phoneNumber: editedUser.phoneNumber,
         subscriptionEndDate: editedUser.subscriptionEndDate,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
       alert('Detalii utilizator actualizate cu succes!');
       setEditMode(false);
@@ -85,7 +97,14 @@ function UserDetailsPage() {
     const updatedAttendance = user.attendance ? [...user.attendance, newAttendanceEntry] : [newAttendanceEntry];
 
     try {
-      await axios.put(`https://aplicatie-evidenta-backend.onrender.com`, { attendance: updatedAttendance });
+      const token = localStorage.getItem('token');
+      // Adresa corectă pentru a adăuga prezență este `PUT /api/users/:id`
+      // Trimitem doar câmpul "attendance" pentru a evita suprascrierea altor date
+      await axios.put(`${BACKEND_URL}/api/users/${id}`, { attendance: updatedAttendance }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       alert('Prezență adăugată cu succes!');
       setAttendanceDate('');
       fetchUserDetails();
@@ -104,7 +123,12 @@ function UserDetailsPage() {
   const handleDeleteSimulation = async (simId) => {
     if (window.confirm('Ești sigur că vrei să ștergi acest rezultat al simulării? Această acțiune este ireversibilă.')) {
       try {
-        await axios.delete(`https://aplicatie-evidenta-backend.onrender.com/api/simulations/${simId}`);
+        const token = localStorage.getItem('token');
+        await axios.delete(`${BACKEND_URL}/api/simulations/${simId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
         alert('Rezultat șters cu succes!');
         fetchUserDetails();
       } catch (err) {
