@@ -9,7 +9,6 @@ function ClientDashboard() {
   const { user: authUser, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Adresă backend configurată
   const BACKEND_URL = 'https://aplicatie-evidenta-backend.onrender.com';
 
   const fetchClientData = async () => {
@@ -19,7 +18,6 @@ function ClientDashboard() {
     }
 
     try {
-      // Am corectat adresa API și am adăugat token-ul de autentificare
       const token = localStorage.getItem('token');
       const res = await axios.get(`${BACKEND_URL}/api/users/${authUser.id}`, {
         headers: {
@@ -57,7 +55,7 @@ function ClientDashboard() {
     );
   }
 
-  // Helper function to format time in HH:MM:SS or MM:SS
+  // Helper function to format time in MM:SS
   const formatSecondsToMMSS = (totalSeconds) => {
     if (totalSeconds === null || totalSeconds === undefined) {
       return '-';
@@ -70,7 +68,6 @@ function ClientDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200 p-4 sm:p-6 lg:p-8 font-sans antialiased">
       <div className="max-w-7xl mx-auto relative">
-        {/* Logout button - positioned top-right */}
         <button
           onClick={handleLogout}
           className="absolute top-4 right-4 bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-red-700 active:bg-red-800 transition-all duration-300 shadow-md hover:shadow-lg z-10"
@@ -78,12 +75,10 @@ function ClientDashboard() {
           Deconectare
         </button>
 
-        {/* Header Section */}
         <div className="flex justify-between items-center mb-8 pt-16 sm:pt-4">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-blue-800 tracking-tight">Bun venit, {user.name}!</h1>
         </div>
 
-        {/* Secțiunea Abonamentul meu */}
         <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-blue-100">
           <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-blue-700">Abonamentul meu</h2>
           <p className="text-gray-700 text-lg">
@@ -94,13 +89,12 @@ function ClientDashboard() {
           </p>
         </div>
 
-        {/* Secțiunea Prezența mea la Antrenamente */}
         <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-blue-100">
           <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-blue-700">Prezența mea la Antrenamente</h2>
           {user.attendance && user.attendance.length > 0 ? (
             <ul className="list-disc pl-6 text-gray-700 space-y-2 text-lg">
               {user.attendance
-                .sort((a, b) => new Date(b.date) - new Date(a.date)) // Sortează după dată descendent
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
                 .map((att, index) => (
                   <li key={index}>
                     <span className="font-medium">
@@ -115,7 +109,6 @@ function ClientDashboard() {
           )}
         </div>
 
-        {/* Secțiunea Rezultatele Simulărilor Mele */}
         <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-blue-100">
           <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-blue-700">Rezultatele Simulărilor Mele</h2>
           {simulationResults.length > 0 ? (
@@ -139,11 +132,8 @@ function ClientDashboard() {
                       <td className="py-3 px-4 sm:px-6 font-mono">{formatSecondsToMMSS(result.rawTime)}</td>
                       <td className="py-3 px-4 sm:px-6">{result.penaltyTime}s</td>
                       <td className="py-3 px-4 sm:px-6 font-mono font-bold text-blue-700">{formatSecondsToMMSS(result.totalTime)}</td>
-                      <td className="py-3 px-4 sm:px-6 font-mono">
-                        {result.checkpointTimes && result.checkpointTimes.length > 0
-                          ? result.checkpointTimes.map(time => formatSecondsToMMSS(time)).join('; ')
-                          : '-'}
-                      </td>
+                      {/* ACEASTĂ LINIE A FOST CORECTATĂ */}
+                      <td className="py-3 px-4 sm:px-6 font-mono">{result.javelinTime ? formatSecondsToMMSS(result.javelinTime) : '-'}</td>
                       <td className="py-3 px-4 sm:px-6">{result.penaltiesList?.length > 0 ? result.penaltiesList.join(', ') : '-'}</td>
                       <td className="py-3 px-4 sm:px-6">{result.eliminatedObstaclesList?.length > 0 ? result.eliminatedObstaclesList.join(', ') : '-'}</td>
                     </tr>
