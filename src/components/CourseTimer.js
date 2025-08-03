@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext'; // Import necesar pentru a obține token-ul
 
 const obstacole = [
   "Săritura lungime", "Pas sărit", "Rostogoliri", "Bancă greutăți",
@@ -7,38 +8,42 @@ const obstacole = [
   "Manechin", "Aruncare minge", "Detentă verticală", "Navetă"
 ];
 const penaltySeconds = 3;
+const BACKEND_URL = 'https://aplicatie-evidenta-backend.onrender.com';
 
+// Funcție actualizată pentru a formata timpul cu zecimale
 function formatTime(totalSeconds) {
-  const m = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
-  const s = String(totalSeconds % 60).padStart(2, '0');
-  return `${m}:${s}`;
+  if (totalSeconds === null || totalSeconds === undefined || isNaN(totalSeconds)) {
+    return '-';
+  }
+  const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+  const seconds = (totalSeconds % 60).toFixed(2).padStart(5, '0');
+  return `${minutes}:${seconds}`;
 }
 
 function CourseTimer({ userId, onSimulationSaved }) {
-  const [timerDisplay, setTimerDisplay] = useState('00:00');
+  const [timerDisplay, setTimerDisplay] = useState('00:00.00');
   const [rawTimeDisplay, setRawTimeDisplay] = useState('Timp fără penalizări: -');
   const [finalTimeDisplay, setFinalTimeDisplay] = useState('Timp total cu penalizări: -');
   const [penaltyTimeDisplay, setPenaltyTimeDisplay] = useState('Penalizări: -');
   const [penaltyListDisplay, setPenaltyListDisplay] = useState('Obstacole penalizate: -');
   const [eliminatedListDisplay, setEliminatedListDisplay] = useState('Obstacole eliminate: -');
-
-  // Stări și referințe pentru Timp Jaloane (păstrate conform codului tău inițial)
   const [javelinTimeDisplay, setJavelinTimeDisplay] = useState('Timp Jaloane: -');
-  const javelinStartTimeRef = useRef(null); // Timpul când s-a apăsat butonul Timp Jaloane
-  const [javelinTimerActive, setJavelinTimerActive] = useState(false); // Starea butonului Timp Jaloane
+
+  const javelinStartTimeRef = useRef(null);
+  const [javelinTimerActive, setJavelinTimerActive] = useState(false);
 
   const [timerRunning, setTimerRunning] = useState(false);
 
   const startTimeRef = useRef(null);
   const intervalRef = useRef(null);
   const penaltiesRef = useRef([]);
-  const eliminatedObstaclesRef = useRef([]); // Păstrat eliminatedObstaclesRef
+  const eliminatedObstaclesRef = useRef([]);
+  const { user: authUser } = useAuth();
 
   useEffect(() => {
     resetAll();
   }, [userId]);
 
-  // Actualizează afișajul rezultatelor curente
   const updateDisplay = (finalT, penaltyT, penaltiesL, eliminatedL, javelinT) => {
     setFinalTimeDisplay(`Timp total cu penalizări: ${finalT}`);
     setPenaltyTimeDisplay(`Penalizări: ${penaltyT}`);
@@ -68,9 +73,9 @@ function CourseTimer({ userId, onSimulationSaved }) {
     setTimerRunning(true);
 
     intervalRef.current = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+      const elapsed = (Date.now() - startTimeRef.current) / 1000;
       setTimerDisplay(formatTime(elapsed));
-    }, 500);
+    }, 100);
   };
 
   const startJavelinTimer = () => {
@@ -84,7 +89,7 @@ function CourseTimer({ userId, onSimulationSaved }) {
     }
     javelinStartTimeRef.current = Date.now();
     setJavelinTimerActive(true);
-    setJavelinTimeDisplay('Timp Jaloane: ...');
+    setJavelinTimeDisplay('Timp Jaloane: în curs...');
     alert("Cronometrul pentru jaloane a pornit!");
   };
 
@@ -96,13 +101,14 @@ function CourseTimer({ userId, onSimulationSaved }) {
     clearInterval(intervalRef.current);
     setTimerRunning(false);
 
-    const elapsedSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
+    // Folosim timpul real, nu trunchiat
+    const elapsedSeconds = (Date.now() - startTimeRef.current) / 1000;
     const totalPenaltySeconds = penaltiesRef.current.length * penaltySeconds;
     const finalTotalSeconds = elapsedSeconds + totalPenaltySeconds;
 
     let finalJavelinTime = null;
     if (javelinTimerActive && javelinStartTimeRef.current) {
-      finalJavelinTime = Math.floor((Date.now() - javelinStartTimeRef.current) / 1000);
+      finalJavelinTime = (Date.now() - javelinStartTimeRef.current) / 1000;
     }
     setJavelinTimerActive(false);
 
@@ -116,14 +122,20 @@ function CourseTimer({ userId, onSimulationSaved }) {
     );
 
     try {
-      await axios.post('http://localhost:5000/api/simulations', {
+      const token = localStorage.getItem('token');
+      // Am corectat URL-ul și am adăugat token-ul de autorizare
+      await axios.post(`${BACKEND_URL}/api/simulations`, {
         userId: userId,
         rawTime: elapsedSeconds,
         penaltyTime: totalPenaltySeconds,
         totalTime: finalTotalSeconds,
         penaltiesList: penaltiesRef.current,
-        eliminatedObstaclesList: eliminatedObstaclesRef.current, // Păstrat eliminatedObstaclesList
-        javelinTime: finalJavelinTime, // Păstrat javelinTime
+        eliminatedObstaclesList: eliminatedObstaclesRef.current,
+        javelinTime: finalJavelinTime,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
       alert('Rezultatul simulării a fost salvat cu succes în contul utilizatorului!');
       if (onSimulationSaved) {
@@ -139,7 +151,7 @@ function CourseTimer({ userId, onSimulationSaved }) {
   const resetAll = () => {
     clearInterval(intervalRef.current);
     setTimerRunning(false);
-    setTimerDisplay("00:00");
+    setTimerDisplay("00:00.00");
     updateDisplay('-', '-', 'Niciunul', 'Niciunul', '-');
     setRawTimeDisplay("Timp fără penalizări: -");
     penaltiesRef.current = [];
@@ -192,9 +204,8 @@ function CourseTimer({ userId, onSimulationSaved }) {
         </h1>
 
         {/* Container FIXED/STICKY pentru butoane STOP, JALOANE și CRONOMETRU */}
-        {/* Acesta va conține toate elementele care devin sticky și mai mici */}
         <div className="sticky top-0 z-50 bg-white p-2 shadow-md rounded-b-lg -mx-4 sm:-mx-6 lg:-mx-8 mb-4">
-            <div className="flex justify-center gap-2 mb-2"> {/* Rând pentru cele două butoane */}
+            <div className="flex justify-center gap-2 mb-2">
                 <button
                   onClick={stopTimer}
                   className={`flex items-center justify-center px-2 py-1 rounded-lg text-sm font-semibold transition-all duration-300 ${!timerRunning ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 active:bg-red-800 shadow-md hover:shadow-lg'} text-white`}
@@ -210,7 +221,6 @@ function CourseTimer({ userId, onSimulationSaved }) {
                   Start Timp Jaloane
                 </button>
             </div>
-            {/* Afișaj Cronometru Principal - acum inclus în containerul sticky și mai mic */}
             <div className="text-center text-2xl sm:text-3xl font-extrabold text-blue-900 font-mono bg-blue-50 p-2 rounded-lg shadow-inner">
               {timerDisplay}
             </div>
@@ -241,9 +251,7 @@ function CourseTimer({ userId, onSimulationSaved }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {obstacole.map((obstacle, index) => (
               <div key={index} className="flex flex-col gap-2 p-4 border border-gray-200 rounded-lg shadow-sm bg-white hover:shadow-md transition-shadow duration-200">
-                {/* Textul obstacolului mai mic */}
                 <p className="text-base font-medium text-gray-800 text-center mb-2">{obstacle}</p>
-                {/* Butoanele de acțiune mai înalte */}
                 <button
                   onClick={() => addPenalty(obstacle)}
                   className="w-full bg-yellow-500 hover:bg-yellow-600 active:bg-yellow-700 text-white px-4 py-3 rounded-md font-semibold text-base transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -251,7 +259,6 @@ function CourseTimer({ userId, onSimulationSaved }) {
                 >
                   Penalizare ({penaltySeconds}s)
                 </button>
-                {/* Butoanele de acțiune mai înalte */}
                 <button
                   onClick={() => addEliminated(obstacle)}
                   className="w-full bg-red-500 hover:bg-red-600 active:bg-red-700 text-white px-4 py-3 rounded-md font-semibold text-base transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
