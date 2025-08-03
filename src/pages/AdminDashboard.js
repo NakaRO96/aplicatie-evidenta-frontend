@@ -142,7 +142,7 @@ function AdminDashboard() {
                 </thead>
                 <tbody className="block md:table-row-group">
                   {filteredUsers.map((user) => (
-                    <tr key={user._id} className="border-b border-gray-200 md:table-row md:hover:bg-blue-50 transition-colors duration-150 block md:hidden mb-4 p-4 rounded-xl shadow-md bg-white">
+                    <tr key={user._id} className="border-b border-gray-200 md:table-row md:hover:bg-blue-50 transition-colors duration-150 block md:p-4 md:rounded-xl md:shadow-md md:bg-white md:mb-0 mb-4 p-4 rounded-xl shadow-md bg-white">
                       <td data-label="Nume" className="py-2 px-0 block md:table-cell md:py-3 md:px-6 font-semibold text-gray-700 md:text-gray-900">
                         <span className="md:hidden text-gray-500 font-normal block">Nume:</span>
                         {user.name}
