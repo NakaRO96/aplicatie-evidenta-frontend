@@ -3,8 +3,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import CourseTimer from '../components/CourseTimer';
-import { toast } from 'react-toastify'; // NOU: Importă toast
-import { FaArrowLeft, FaUserCircle, FaEdit, FaSave, FaTimes, FaCalendarCheck, FaPlus, FaRunning, FaChartLine, FaTrashAlt, FaPhone, FaCalendarDay } from 'react-icons/fa'; // NOU: Importă iconițele necesare
+import { toast } from 'react-toastify';
+import { FaArrowLeft, FaUser, FaUserCircle, FaEdit, FaSave, FaTimes, FaCalendarCheck, FaPlus, FaRunning, FaChartLine, FaTrashAlt, FaPhone, FaCalendarDay } from 'react-icons/fa';
 
 function UserDetailsPage() {
   const { id } = useParams();
@@ -14,7 +14,6 @@ function UserDetailsPage() {
   const [editMode, setEditMode] = useState(false);
   const [editedUser, setEditedUser] = useState({});
   const [attendanceDate, setAttendanceDate] = useState('');
-  // Eliminat: const [attendanceError, setAttendanceError] = useState('');
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -36,11 +35,11 @@ function UserDetailsPage() {
       if (err.response && err.response.status === 401) {
         logout();
         navigate('/login');
-        toast.error('Sesiunea a expirat. Te rugăm să te autentifici din nou.'); // MODIFICAT
+        toast.error('Sesiunea a expirat. Te rugăm să te autentifici din nou.');
       } else if (err.response && err.response.status === 403) {
-        toast.error('Acces neautorizat la resursă.'); // MODIFICAT
+        toast.error('Acces neautorizat la resursă.');
       } else {
-        toast.error('A apărut o eroare la preluarea detaliilor utilizatorului.'); // MODIFICAT
+        toast.error('A apărut o eroare la preluarea detaliilor utilizatorului.');
       }
     }
   };
@@ -51,7 +50,7 @@ function UserDetailsPage() {
 
   const handleUpdateUser = async () => {
     if (!editedUser.name || !editedUser.phoneNumber) {
-      toast.error('Numele și numărul de telefon nu pot fi goale.'); // MODIFICAT
+      toast.error('Numele și numărul de telefon nu pot fi goale.');
       return;
     }
 
@@ -66,7 +65,7 @@ function UserDetailsPage() {
           Authorization: `Bearer ${token}`
         }
       });
-      toast.success('Detalii utilizator actualizate cu succes!'); // MODIFICAT
+      toast.success('Detalii utilizator actualizate cu succes!');
       setEditMode(false);
       fetchUserDetails();
     } catch (err) {
@@ -74,18 +73,18 @@ function UserDetailsPage() {
       if (err.response && err.response.status === 401) {
         logout();
         navigate('/login');
-        toast.error('Sesiunea a expirat. Te rugăm să te autentifici din nou.'); // MODIFICAT
+        toast.error('Sesiunea a expirat. Te rugăm să te autentifici din nou.');
       } else if (err.response && err.response.status === 400 && err.response.data.msg) {
-        toast.error(`Eroare: ${err.response.data.msg}`); // MODIFICAT
+        toast.error(`Eroare: ${err.response.data.msg}`);
       } else {
-        toast.error('Eroare la actualizarea detaliilor utilizatorului.'); // MODIFICAT
+        toast.error('Eroare la actualizarea detaliilor utilizatorului.');
       }
     }
   };
 
   const handleAddAttendance = async () => {
     if (!attendanceDate) {
-      toast.error('Te rog să selectezi o dată.'); // MODIFICAT
+      toast.error('Te rog să selectezi o dată.');
       return;
     }
 
@@ -103,7 +102,7 @@ function UserDetailsPage() {
           Authorization: `Bearer ${token}`
         }
       });
-      toast.success('Prezență adăugată cu succes!'); // MODIFICAT
+      toast.success('Prezență adăugată cu succes!');
       setAttendanceDate('');
       fetchUserDetails();
     } catch (err) {
@@ -111,9 +110,9 @@ function UserDetailsPage() {
       if (err.response && err.response.status === 401) {
         logout();
         navigate('/login');
-        toast.error('Sesiunea a expirat. Te rugăm să te autentifici din nou.'); // MODIFICAT
+        toast.error('Sesiunea a expirat. Te rugăm să te autentifici din nou.');
       } else {
-        toast.error('A apărut o eroare la adăugarea prezenței.'); // MODIFICAT
+        toast.error('A apărut o eroare la adăugarea prezenței.');
       }
     }
   };
@@ -127,18 +126,18 @@ function UserDetailsPage() {
             Authorization: `Bearer ${token}`
           }
         });
-        toast.success('Rezultat șters cu succes!'); // MODIFICAT
+        toast.success('Rezultat șters cu succes!');
         fetchUserDetails();
       } catch (err) {
         console.error('Eroare la ștergerea rezultatului simulării:', err);
         if (err.response && err.response.status === 401) {
           logout();
           navigate('/login');
-          toast.error('Sesiunea a expirat. Te rugăm să te autentifici din nou.'); // MODIFICAT
+          toast.error('Sesiunea a expirat. Te rugăm să te autentifici din nou.');
         } else if (err.response && err.response.status === 403) {
-          toast.error('Acces neautorizat. Nu ai permisiunea de a șterge rezultate.'); // MODIFICAT
+          toast.error('Acces neautorizat. Nu ai permisiunea de a șterge rezultate.');
         } else {
-          toast.error('A apărut o eroare la ștergerea rezultatului simulării.'); // MODIFICAT
+          toast.error('A apărut o eroare la ștergerea rezultatului simulării.');
         }
       }
     }
@@ -166,9 +165,9 @@ function UserDetailsPage() {
       <div className="max-w-7xl mx-auto">
         <Link
           to="/admin"
-          className="inline-flex items-center text-blue-700 hover:text-blue-900 font-semibold mb-6 transition-colors duration-200 text-lg group gap-2" // MODIFICAT: Adăugat gap-2
+          className="inline-flex items-center text-blue-700 hover:text-blue-900 font-semibold mb-6 transition-colors duration-200 text-lg group gap-2"
         >
-          <FaArrowLeft className="w-5 h-5 mr-2 transform group-hover:-translate-x-1 transition-transform duration-200" /> {/* MODIFICAT: Iconiță */}
+          <FaArrowLeft className="w-5 h-5 mr-2 transform group-hover:-translate-x-1 transition-transform duration-200" />
           Înapoi la Panoul Administrator
         </Link>
 
@@ -179,7 +178,7 @@ function UserDetailsPage() {
         {/* Secțiunea Detalii și Editare */}
         <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-blue-100">
           <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-blue-700 flex items-center gap-3">
-            <FaUserCircle /> {/* NOU: Iconiță */}
+            <FaUserCircle />
             Informații Utilizator
           </h2>
           {editMode ? (
@@ -223,16 +222,16 @@ function UserDetailsPage() {
               <div className="flex flex-col sm:flex-row gap-3 mt-6">
                 <button
                   onClick={handleUpdateUser}
-                  className="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 active:bg-green-800 transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2" // MODIFICAT: Adăugat flex, items-center, etc.
+                  className="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 active:bg-green-800 transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
                 >
-                  <FaSave /> {/* NOU: Iconiță */}
+                  <FaSave />
                   Salvează Modificări
                 </button>
                 <button
                   onClick={() => { setEditMode(false); setEditedUser(user); }}
-                  className="bg-gray-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-600 active:bg-gray-700 transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2" // MODIFICAT: Adăugat flex, items-center, etc.
+                  className="bg-gray-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-600 active:bg-gray-700 transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
                 >
-                  <FaTimes /> {/* NOU: Iconiță */}
+                  <FaTimes />
                   Anulează
                 </button>
               </div>
@@ -248,9 +247,9 @@ function UserDetailsPage() {
               </p>
               <button
                 onClick={() => setEditMode(true)}
-                className="bg-yellow-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-yellow-600 active:bg-yellow-700 transition-all duration-300 mt-6 shadow-md hover:shadow-lg flex items-center gap-2" // MODIFICAT: Adăugat flex, items-center, etc.
+                className="bg-yellow-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-yellow-600 active:bg-yellow-700 transition-all duration-300 mt-6 shadow-md hover:shadow-lg flex items-center gap-2"
               >
-                <FaEdit /> {/* NOU: Iconiță */}
+                <FaEdit />
                 Editează Detalii
               </button>
             </div>
@@ -260,7 +259,7 @@ function UserDetailsPage() {
         {/* Secțiunea Prezență */}
         <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-purple-100">
           <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-purple-700 flex items-center gap-3">
-            <FaCalendarCheck /> {/* NOU: Iconiță */}
+            <FaCalendarCheck />
             Prezență la Antrenamente
           </h2>
           <div className="mb-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
@@ -276,13 +275,12 @@ function UserDetailsPage() {
             />
             <button
               onClick={handleAddAttendance}
-              className="bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-purple-700 active:bg-purple-800 transition-all duration-300 shadow-md hover:shadow-lg w-full sm:w-auto flex items-center justify-center gap-2" // MODIFICAT: Adăugat flex, items-center, etc.
+              className="bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-purple-700 active:bg-purple-800 transition-all duration-300 shadow-md hover:shadow-lg w-full sm:w-auto flex items-center justify-center gap-2"
             >
-              <FaPlus /> {/* NOU: Iconiță */}
+              <FaPlus />
               Adaugă Prezență
             </button>
           </div>
-          {/* Eliminat: {attendanceError && <p className="text-red-500 text-sm italic mb-4">{attendanceError}</p>} */}
           {user.attendance && user.attendance.length > 0 ? (
             <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg p-4 bg-gray-50">
               <ul className="list-disc pl-5 text-gray-800 space-y-2">
@@ -306,7 +304,7 @@ function UserDetailsPage() {
         {/* Secțiunea Adaugă Simulare */}
         <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-emerald-100">
           <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-emerald-700 flex items-center gap-3">
-            <FaRunning /> {/* NOU: Iconiță */}
+            <FaRunning />
             Adaugă Simulare Traseu Aplicativ
           </h2>
           {!showTimer ? (
@@ -335,7 +333,7 @@ function UserDetailsPage() {
         {/* Secțiunea Rezultate Simulări */}
         <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-teal-100">
           <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-teal-700 flex items-center gap-3">
-            <FaChartLine /> {/* NOU: Iconiță */}
+            <FaChartLine />
             Rezultate Simulări
           </h2>
           {simulationResults.length > 0 ? (
@@ -370,9 +368,9 @@ function UserDetailsPage() {
                       <td className="py-3 px-4 sm:px-6">
                         <button
                           onClick={() => handleDeleteSimulation(result._id)}
-                          className="bg-red-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-red-600 active:bg-red-700 transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-1" // MODIFICAT: Adăugat flex, items-center, etc.
+                          className="bg-red-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-red-600 active:bg-red-700 transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-1"
                         >
-                          <FaTrashAlt /> {/* NOU: Iconiță */}
+                          <FaTrashAlt />
                           Șterge
                         </button>
                       </td>
