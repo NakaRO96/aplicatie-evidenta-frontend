@@ -7,7 +7,7 @@ import { FaLock, FaPhone, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 function LoginPage() {
   const [formData, setFormData] = useState({
-    phoneNumber: '',
+    emailOrPhone: '',
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -46,7 +46,7 @@ function LoginPage() {
         </h1>
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="relative">
-            <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="phoneNumber">
+            <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="emailOrPhone">
               Număr de telefon
             </label>
             <span className="absolute inset-y-0 left-0 top-7 pl-3 flex items-center text-gray-400">
@@ -54,9 +54,9 @@ function LoginPage() {
             </span>
             <input
               type="tel"
-              id="phoneNumber"
-              name="phoneNumber"
-              value={formData.phoneNumber}
+              id="emailOrPhone"
+              name="emailOrPhone"
+              value={formData.emailOrPhone}
               onChange={handleChange}
               className="w-full px-4 py-2 pl-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-3 focus:ring-blue-400 transition-all duration-200"
               placeholder="Număr de telefon"
