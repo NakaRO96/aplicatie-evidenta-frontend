@@ -3,14 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
-import { FaLock, FaUser, FaEye, FaEyeSlash } from 'react-icons/fa'; // NOU: FaLock, FaEye, FaEyeSlash
+import { FaLock, FaPhone, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 function LoginPage() {
   const [formData, setFormData] = useState({
-    emailOrPhone: '',
+    phoneNumber: '',
     password: '',
   });
-  const [showPassword, setShowPassword] = useState(false); // NOU: Stare pentru vizibilitatea parolei
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -46,20 +46,20 @@ function LoginPage() {
         </h1>
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="relative">
-            <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="emailOrPhone">
-              Email sau Telefon
+            <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="phoneNumber">
+              Număr de telefon
             </label>
             <span className="absolute inset-y-0 left-0 top-7 pl-3 flex items-center text-gray-400">
-              <FaUser />
+              <FaPhone />
             </span>
             <input
-              type="text"
-              id="emailOrPhone"
-              name="emailOrPhone"
-              value={formData.emailOrPhone}
+              type="tel"
+              id="phoneNumber"
+              name="phoneNumber"
+              value={formData.phoneNumber}
               onChange={handleChange}
               className="w-full px-4 py-2 pl-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-3 focus:ring-blue-400 transition-all duration-200"
-              placeholder="Adresă de email sau număr de telefon"
+              placeholder="Număr de telefon"
               required
             />
           </div>
@@ -68,10 +68,10 @@ function LoginPage() {
               Parolă
             </label>
             <span className="absolute inset-y-0 left-0 top-7 pl-3 flex items-center text-gray-400">
-              <FaLock /> {/* NOU: Iconița de lacăt */}
+              <FaLock />
             </span>
             <input
-              type={showPassword ? 'text' : 'password'} // NOU: Tip dinamic
+              type={showPassword ? 'text' : 'password'}
               id="password"
               name="password"
               value={formData.password}
@@ -82,10 +82,10 @@ function LoginPage() {
             />
             <button
               type="button"
-              onClick={() => setShowPassword(!showPassword)} // NOU: Toggle vizibilitate
+              onClick={() => setShowPassword(!showPassword)}
               className="absolute inset-y-0 right-0 top-7 pr-3 flex items-center text-gray-400 hover:text-blue-500 transition-colors duration-200 focus:outline-none"
             >
-              {showPassword ? <FaEyeSlash /> : <FaEye />} {/* NOU: Iconița ochi */}
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
             </button>
           </div>
           <button
@@ -95,12 +95,6 @@ function LoginPage() {
             Autentificare
           </button>
         </form>
-        <p className="mt-6 text-center text-gray-600 text-sm">
-          Nu ai un cont?{' '}
-          <Link to="/create-account" className="text-blue-600 font-semibold hover:underline">
-            Creează un cont nou
-          </Link>
-        </p>
       </div>
     </div>
   );
