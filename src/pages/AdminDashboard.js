@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-toastify';
+import { FaUserPlus, FaInfoCircle, FaTrashAlt } from 'react-icons/fa'; // NOU: Importă iconițele necesare
 
 function AdminDashboard() {
   const [users, setUsers] = useState([]);
@@ -26,11 +28,11 @@ function AdminDashboard() {
       if (err.response && err.response.status === 401) {
         logout();
         navigate('/login');
-        alert('Sesiunea a expirat. Te rugăm să te autentifici din nou.');
+        toast.error('Sesiunea a expirat. Te rugăm să te autentifici din nou.');
       } else if (err.response && err.response.status === 403) {
-        alert('Acces neautorizat la resursă.');
+        toast.error('Acces neautorizat la resursă.');
       } else {
-        alert('A apărut o eroare la preluarea utilizatorilor.');
+        toast.error('A apărut o eroare la preluarea utilizatorilor.');
       }
     }
   };
@@ -53,18 +55,18 @@ function AdminDashboard() {
             Authorization: `Bearer ${token}`
           }
         });
-        alert(`Utilizatorul ${userName} a fost șters cu succes.`);
+        toast.success(`Utilizatorul ${userName} a fost șters cu succes.`);
         fetchUsers();
       } catch (err) {
         console.error('Eroare la ștergerea utilizatorului:', err);
         if (err.response && err.response.status === 401) {
           logout();
           navigate('/login');
-          alert('Sesiunea a expirat. Te rugăm să te autentifici din nou.');
+          toast.error('Sesiunea a expirat. Te rugăm să te autentifici din nou.');
         } else if (err.response && err.response.status === 403) {
-          alert('Acces neautorizat. Nu ai permisiunea de a șterge utilizatori.');
+          toast.error('Acces neautorizat. Nu ai permisiunea de a șterge utilizatori.');
         } else {
-          alert('A apărut o eroare la ștergerea utilizatorului.');
+          toast.error('A apărut o eroare la ștergerea utilizatorului.');
         }
       }
     }
@@ -86,8 +88,9 @@ function AdminDashboard() {
           <div className="flex flex-col sm:flex-row gap-3">
             <Link
               to="/admin/create-account"
-              className="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 active:bg-green-800 transition-all duration-300 shadow-md hover:shadow-lg text-center"
+              className="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 active:bg-green-800 transition-all duration-300 shadow-md hover:shadow-lg text-center flex items-center justify-center gap-2" // MODIFICAT: Adăugat `flex items-center gap-2`
             >
+              <FaUserPlus /> {/* NOU: Iconița pentru "Creează Cont Nou" */}
               Creează Cont Nou
             </Link>
             <button
@@ -162,14 +165,16 @@ function AdminDashboard() {
                       <td data-label="Acțiuni" className="py-2 px-0 flex flex-col sm:flex-row gap-2 md:table-cell md:py-3 md:px-6">
                         <Link
                           to={`/admin/users/${user._id}`}
-                          className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-blue-600 active:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md text-center"
+                          className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-blue-600 active:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md text-center flex items-center justify-center gap-1" // MODIFICAT: Adăugat `flex items-center gap-1`
                         >
+                          <FaInfoCircle /> {/* NOU: Iconița pentru "Detalii" */}
                           Detalii
                         </Link>
                         <button
                           onClick={() => handleDeleteUser(user._id, user.name)}
-                          className="bg-red-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-red-600 active:bg-red-700 transition-all duration-200 shadow-sm hover:shadow-md text-center"
+                          className="bg-red-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-red-600 active:bg-red-700 transition-all duration-200 shadow-sm hover:shadow-md text-center flex items-center justify-center gap-1" // MODIFICAT: Adăugat `flex items-center gap-1`
                         >
+                          <FaTrashAlt /> {/* NOU: Iconița pentru "Șterge" */}
                           Șterge
                         </button>
                       </td>
