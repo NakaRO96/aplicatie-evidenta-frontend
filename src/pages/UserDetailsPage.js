@@ -2,19 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import CourseTimer from '../components/CourseTimer';
-import { toast } from 'react-toastify';
-import { FaArrowLeft, FaUser, FaUserCircle, FaEdit, FaSave, FaTimes, FaCalendarCheck, FaPlus, FaRunning, FaChartLine, FaTrashAlt, FaPhone, FaCalendarDay } from 'react-icons/fa';
+import CourseTimer from '../components/CourseTimer'; // Importă componenta cronometrului
+import { toast } from 'react-toastify'; // NOU: Importă toast
 
 function UserDetailsPage() {
-  const { id } = useParams();
+  const { id } = useParams(); // ID-ul utilizatorului din URL
   const [user, setUser] = useState(null);
   const [simulationResults, setSimulationResults] = useState([]);
-  const [showTimer, setShowTimer] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [editedUser, setEditedUser] = useState({});
-  const [attendanceDate, setAttendanceDate] = useState('');
-  const { logout } = useAuth();
+  const [showTimer, setShowTimer] = useState(false); // Stare pentru a afișa/ascunde cronometrul
+  const [editMode, setEditMode] = useState(false); // Stare pentru modul de editare
+  const [editedUser, setEditedUser] = useState({}); // Stare pentru datele editate
+  const [attendanceDate, setAttendanceDate] = useState(''); // Pentru adăugare prezență
+  const [attendanceError, setAttendanceError] = useState('');
+  const { logout } = useAuth(); // Obține funcția de logout din context
   const navigate = useNavigate();
 
   const BACKEND_URL = 'https://aplicatie-evidenta-backend.onrender.com';
@@ -29,7 +29,7 @@ function UserDetailsPage() {
       });
       setUser(res.data.user);
       setSimulationResults(res.data.simulationResults);
-      setEditedUser(res.data.user);
+      setEditedUser(res.data.user); // Inițializează datele editabile
     } catch (err) {
       console.error('Eroare la preluarea detaliilor utilizatorului:', err);
       if (err.response && err.response.status === 401) {
@@ -76,7 +76,8 @@ function UserDetailsPage() {
         toast.error('Sesiunea a expirat. Te rugăm să te autentifici din nou.');
       } else if (err.response && err.response.status === 400 && err.response.data.msg) {
         toast.error(`Eroare: ${err.response.data.msg}`);
-      } else {
+      }
+      else {
         toast.error('Eroare la actualizarea detaliilor utilizatorului.');
       }
     }
@@ -84,9 +85,10 @@ function UserDetailsPage() {
 
   const handleAddAttendance = async () => {
     if (!attendanceDate) {
-      toast.error('Te rog să selectezi o dată.');
+      setAttendanceError('Te rog să selectezi o dată.');
       return;
     }
+    setAttendanceError('');
 
     const newAttendanceEntry = {
       date: new Date(attendanceDate).toISOString(),
@@ -151,6 +153,7 @@ function UserDetailsPage() {
     );
   }
 
+  // Helper function to format time in HH:MM:SS or MM:SS
   const formatSecondsToMMSS = (totalSeconds) => {
     if (totalSeconds === null || totalSeconds === undefined) {
       return '-';
@@ -165,9 +168,17 @@ function UserDetailsPage() {
       <div className="max-w-7xl mx-auto">
         <Link
           to="/admin"
-          className="inline-flex items-center text-blue-700 hover:text-blue-900 font-semibold mb-6 transition-colors duration-200 text-lg group gap-2"
+          className="inline-flex items-center text-blue-700 hover:text-blue-900 font-semibold mb-6 transition-colors duration-200 text-lg group"
         >
-          <FaArrowLeft className="w-5 h-5 mr-2 transform group-hover:-translate-x-1 transition-transform duration-200" />
+          <svg
+            className="w-5 h-5 mr-2 transform group-hover:-translate-x-1 transition-transform duration-200"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
           Înapoi la Panoul Administrator
         </Link>
 
@@ -177,44 +188,32 @@ function UserDetailsPage() {
 
         {/* Secțiunea Detalii și Editare */}
         <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-blue-100">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-blue-700 flex items-center gap-3">
-            <FaUserCircle />
-            Informații Utilizator
-          </h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-blue-700">Informații Utilizator</h2>
           {editMode ? (
             <div className="space-y-4">
-              <div className="relative">
+              <div>
                 <label className="block text-gray-700 text-base font-semibold mb-2">Nume:</label>
-                <span className="absolute inset-y-0 left-0 top-7 pl-3 flex items-center text-gray-400">
-                  <FaUser />
-                </span>
                 <input
                   type="text"
-                  className="border border-gray-300 px-4 py-2 pl-10 rounded-lg w-full focus:outline-none focus:ring-3 focus:ring-blue-400 transition-all duration-200"
+                  className="border border-gray-300 px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-3 focus:ring-blue-400 transition-all duration-200"
                   value={editedUser.name || ''}
                   onChange={(e) => setEditedUser({ ...editedUser, name: e.target.value })}
                 />
               </div>
-              <div className="relative">
+              <div>
                 <label className="block text-gray-700 text-base font-semibold mb-2">Număr Telefon:</label>
-                <span className="absolute inset-y-0 left-0 top-7 pl-3 flex items-center text-gray-400">
-                  <FaPhone />
-                </span>
                 <input
                   type="text"
-                  className="border border-gray-300 px-4 py-2 pl-10 rounded-lg w-full focus:outline-none focus:ring-3 focus:ring-blue-400 transition-all duration-200"
+                  className="border border-gray-300 px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-3 focus:ring-blue-400 transition-all duration-200"
                   value={editedUser.phoneNumber || ''}
                   onChange={(e) => setEditedUser({ ...editedUser, phoneNumber: e.target.value })}
                 />
               </div>
-              <div className="relative">
+              <div>
                 <label className="block text-gray-700 text-base font-semibold mb-2">Data Expirare Abonament:</label>
-                <span className="absolute inset-y-0 left-0 top-7 pl-3 flex items-center text-gray-400">
-                  <FaCalendarDay />
-                </span>
                 <input
                   type="date"
-                  className="border border-gray-300 px-4 py-2 pl-10 rounded-lg w-full focus:outline-none focus:ring-3 focus:ring-blue-400 transition-all duration-200"
+                  className="border border-gray-300 px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-3 focus:ring-blue-400 transition-all duration-200"
                   value={editedUser.subscriptionEndDate ? new Date(editedUser.subscriptionEndDate).toISOString().substring(0, 10) : ''}
                   onChange={(e) => setEditedUser({ ...editedUser, subscriptionEndDate: e.target.value })}
                 />
@@ -222,16 +221,14 @@ function UserDetailsPage() {
               <div className="flex flex-col sm:flex-row gap-3 mt-6">
                 <button
                   onClick={handleUpdateUser}
-                  className="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 active:bg-green-800 transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                  className="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 active:bg-green-800 transition-all duration-300 shadow-md hover:shadow-lg"
                 >
-                  <FaSave />
                   Salvează Modificări
                 </button>
                 <button
                   onClick={() => { setEditMode(false); setEditedUser(user); }}
-                  className="bg-gray-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-600 active:bg-gray-700 transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                  className="bg-gray-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-600 active:bg-gray-700 transition-all duration-300 shadow-md hover:shadow-lg"
                 >
-                  <FaTimes />
                   Anulează
                 </button>
               </div>
@@ -247,9 +244,8 @@ function UserDetailsPage() {
               </p>
               <button
                 onClick={() => setEditMode(true)}
-                className="bg-yellow-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-yellow-600 active:bg-yellow-700 transition-all duration-300 mt-6 shadow-md hover:shadow-lg flex items-center gap-2"
+                className="bg-yellow-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-yellow-600 active:bg-yellow-700 transition-all duration-300 mt-6 shadow-md hover:shadow-lg"
               >
-                <FaEdit />
                 Editează Detalii
               </button>
             </div>
@@ -258,10 +254,7 @@ function UserDetailsPage() {
 
         {/* Secțiunea Prezență */}
         <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-purple-100">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-purple-700 flex items-center gap-3">
-            <FaCalendarCheck />
-            Prezență la Antrenamente
-          </h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-purple-700">Prezență la Antrenamente</h2>
           <div className="mb-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
             <label htmlFor="attendanceDate" className="block text-gray-700 text-base font-semibold flex-shrink-0">
               Adaugă Prezență pentru data:
@@ -275,12 +268,12 @@ function UserDetailsPage() {
             />
             <button
               onClick={handleAddAttendance}
-              className="bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-purple-700 active:bg-purple-800 transition-all duration-300 shadow-md hover:shadow-lg w-full sm:w-auto flex items-center justify-center gap-2"
+              className="bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-purple-700 active:bg-purple-800 transition-all duration-300 shadow-md hover:shadow-lg w-full sm:w-auto"
             >
-              <FaPlus />
               Adaugă Prezență
             </button>
           </div>
+          {attendanceError && <p className="text-red-500 text-sm italic mb-4">{attendanceError}</p>}
           {user.attendance && user.attendance.length > 0 ? (
             <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg p-4 bg-gray-50">
               <ul className="list-disc pl-5 text-gray-800 space-y-2">
@@ -303,10 +296,7 @@ function UserDetailsPage() {
 
         {/* Secțiunea Adaugă Simulare */}
         <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-emerald-100">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-emerald-700 flex items-center gap-3">
-            <FaRunning />
-            Adaugă Simulare Traseu Aplicativ
-          </h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-emerald-700">Adaugă Simulare Traseu Aplicativ</h2>
           {!showTimer ? (
             <button
               onClick={() => setShowTimer(true)}
@@ -332,10 +322,7 @@ function UserDetailsPage() {
 
         {/* Secțiunea Rezultate Simulări */}
         <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-teal-100">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-teal-700 flex items-center gap-3">
-            <FaChartLine />
-            Rezultate Simulări
-          </h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-teal-700">Rezultate Simulări</h2>
           {simulationResults.length > 0 ? (
             <div className="overflow-x-auto relative shadow-md rounded-lg">
               <table className="min-w-full bg-white text-left text-sm sm:text-base">
@@ -358,19 +345,18 @@ function UserDetailsPage() {
                       <td className="py-3 px-4 sm:px-6 font-mono">{formatSecondsToMMSS(result.rawTime)}</td>
                       <td className="py-3 px-4 sm:px-6">{result.penaltyTime}s</td>
                       <td className="py-3 px-4 sm:px-6 font-mono font-bold text-teal-700">{formatSecondsToMMSS(result.totalTime)}</td>
-                      <td className="py-3 px-4 sm:px-6 font-mono">{result.checkpointTimes ? result.checkpointTimes.map(t => formatSecondsToMMSS(t)).join(', ') : '-'}</td>
+                      <td className="py-3 px-4 sm:px-6 font-mono">{formatSecondsToMMSS(result.javelinTime)}</td>
                       <td className="py-3 px-4 sm:px-6 text-gray-600">
                         {result.penaltiesList?.length > 0 ? result.penaltiesList.join(', ') : '-'}
                       </td>
                       <td className="py-3 px-4 sm:px-6 text-gray-600">
-                        {result.eliminatedObstacles?.length > 0 ? result.eliminatedObstacles.join(', ') : '-'}
+                        {result.eliminatedObstaclesList?.length > 0 ? result.eliminatedObstaclesList.join(', ') : '-'}
                       </td>
                       <td className="py-3 px-4 sm:px-6">
                         <button
                           onClick={() => handleDeleteSimulation(result._id)}
-                          className="bg-red-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-red-600 active:bg-red-700 transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-1"
+                          className="bg-red-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-red-600 active:bg-red-700 transition-all duration-200 shadow-sm hover:shadow-md"
                         >
-                          <FaTrashAlt />
                           Șterge
                         </button>
                       </td>
