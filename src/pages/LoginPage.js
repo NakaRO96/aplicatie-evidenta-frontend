@@ -1,100 +1,99 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { toast } from 'react-toastify';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FaLock, FaPhone, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { toast } from 'react-toastify';
+import { FaPhone, FaLock, FaSignInAlt, FaQuestionCircle, FaEye, FaEyeSlash } from 'react-icons/fa'; // NOU: Importă FaEye, FaEyeSlash
 
 function LoginPage() {
-  const [formData, setFormData] = useState({
-    emailOrPhone: '',
-    password: '',
-  });
-  const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // NOU: Stare pentru vizibilitatea parolei
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const BACKEND_URL = 'https://aplicatie-evidenta-backend.onrender.com';
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const res = await axios.post(`${BACKEND_URL}/api/users/login`, formData);
-      login(res.data.token, res.data.user);
-      toast.success('Autentificare reușită!');
 
-      if (res.data.user.role === 'admin') {
+    if (!phoneNumber || !password) {
+      toast.error('Te rog să introduci numărul de telefon și parola.');
+      return;
+    }
+
+    const result = await login(phoneNumber, password);
+    if (result.success) {
+      if (result.role === 'admin') {
         navigate('/admin');
       } else {
         navigate('/client');
       }
-    } catch (err) {
-      console.error('Eroare de autentificare:', err.response.data);
-      toast.error(err.response?.data?.msg || 'Eroare la autentificare. Verifică datele.');
+      toast.success('Autentificare reușită!');
+    } else {
+      toast.error(result.error || 'Autentificare eșuată. Verifică credențialele.');
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200 p-4 font-sans antialiased">
-      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-2xl border border-gray-200">
-        <h1 className="text-3xl font-extrabold text-center text-blue-800 mb-6 tracking-tight">
-          Autentificare
-        </h1>
-        <form onSubmit={handleLogin} className="space-y-6">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
+        <h2 className="text-2xl font-bold text-center mb-6 text-blue-700">Autentificare</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">
-            <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="emailOrPhone">
-              Număr de telefon
+            <label htmlFor="phoneNumber" className="block text-gray-700 text-sm font-bold mb-2">
+              Număr de telefon:
             </label>
-            <span className="absolute inset-y-0 left-0 top-7 pl-3 flex items-center text-gray-400">
-              <FaPhone />
-            </span>
-            <input
-              type="tel"
-              id="emailOrPhone"
-              name="emailOrPhone"
-              value={formData.emailOrPhone}
-              onChange={handleChange}
-              className="w-full px-4 py-2 pl-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-3 focus:ring-blue-400 transition-all duration-200"
-              placeholder="Număr de telefon"
-              required
-            />
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                <FaPhone />
+              </span>
+              <input
+                type="tel" // MODIFICAT: Tip "tel" pentru tastatura numerică pe mobil
+                id="phoneNumber"
+                className="shadow appearance-none border border-gray-300 rounded w-full py-2 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-500"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                required
+              />
+            </div>
           </div>
           <div className="relative">
-            <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="password">
-              Parolă
+            <label htmlFor="password" className="block text-gray-700 text-sm font-bold mb-2">
+              Parola:
             </label>
-            <span className="absolute inset-y-0 left-0 top-7 pl-3 flex items-center text-gray-400">
-              <FaLock />
-            </span>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full px-4 py-2 pl-10 pr-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-3 focus:ring-blue-400 transition-all duration-200"
-              placeholder="Parolă"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 top-7 pr-3 flex items-center text-gray-400 hover:text-blue-500 transition-colors duration-200 focus:outline-none"
-            >
-              {showPassword ? <FaEyeSlash /> : <FaEye />}
-            </button>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                <FaLock />
+              </span>
+              <input
+                type={showPassword ? 'text' : 'password'} // NOU: Tip dinamic pentru vizibilitatea parolei
+                id="password"
+                className="shadow appearance-none border border-gray-300 rounded w-full py-2 pl-10 pr-10 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-500" // MODIFICAT: Adăugat `pr-10` pentru butonul ochi
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)} // NOU: Toggle vizibilitate
+                className="absolute inset-y-0 right-0 top-0 pr-3 flex items-center text-gray-400 hover:text-blue-500 transition-colors duration-200 focus:outline-none h-full" // Ajustat h-full
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />} {/* NOU: Iconița ochi */}
+              </button>
+            </div>
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 active:bg-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full transition duration-200 flex items-center justify-center gap-2"
           >
-            Autentificare
+            <FaSignInAlt />
+            Intră în cont
           </button>
         </form>
+        <div className="mt-4 text-center">
+          <Link to="/forgot-password" className="text-blue-600 hover:underline font-medium flex items-center justify-center gap-1">
+            <FaQuestionCircle />
+            Ai uitat parola?
+          </Link>
+        </div>
       </div>
     </div>
   );
