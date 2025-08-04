@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext'; // Import necesar pentru a obține token-ul
+import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-toastify';
 
 const obstacole = [
   "Săritura lungime", "Pas sărit", "Rostogoliri", "Bancă greutăți",
@@ -54,11 +55,11 @@ function CourseTimer({ userId, onSimulationSaved }) {
 
   const startTimer = () => {
     if (!userId) {
-      alert("Eroare: Niciun utilizator selectat pentru simulare. Reîncarcă pagina sau selectează un utilizator.");
+      toast.error("Eroare: Niciun utilizator selectat pentru simulare. Reîncarcă pagina sau selectează un utilizator.");
       return;
     }
     if (timerRunning) {
-      alert("Cronometrul este deja pornit.");
+      toast.warn("Cronometrul este deja pornit.");
       return;
     }
     penaltiesRef.current = [];
@@ -80,28 +81,27 @@ function CourseTimer({ userId, onSimulationSaved }) {
 
   const startJavelinTimer = () => {
     if (!timerRunning) {
-      alert("Te rog să pornești cronometrul principal înainte de a măsura timpul jaloanelor.");
+      toast.error("Te rog să pornești cronometrul principal înainte de a măsura timpul jaloanelor.");
       return;
     }
     if (javelinTimerActive) {
-      alert("Cronometrul pentru jaloane este deja pornit.");
+      toast.warn("Cronometrul pentru jaloane este deja pornit.");
       return;
     }
     javelinStartTimeRef.current = Date.now();
     setJavelinTimerActive(true);
     setJavelinTimeDisplay('Timp Jaloane: în curs...');
-    alert("Cronometrul pentru jaloane a pornit!");
+    toast.info("Cronometrul pentru jaloane a pornit!");
   };
 
   const stopTimer = async () => {
     if (!timerRunning) {
-      alert("Cronometrul nu este pornit.");
+      toast.error("Cronometrul nu este pornit.");
       return;
     }
     clearInterval(intervalRef.current);
     setTimerRunning(false);
 
-    // Folosim timpul real, nu trunchiat
     const elapsedSeconds = (Date.now() - startTimeRef.current) / 1000;
     const totalPenaltySeconds = penaltiesRef.current.length * penaltySeconds;
     const finalTotalSeconds = elapsedSeconds + totalPenaltySeconds;
@@ -123,7 +123,6 @@ function CourseTimer({ userId, onSimulationSaved }) {
 
     try {
       const token = localStorage.getItem('token');
-      // Am corectat URL-ul și am adăugat token-ul de autorizare
       await axios.post(`${BACKEND_URL}/api/simulations`, {
         userId: userId,
         rawTime: elapsedSeconds,
@@ -137,14 +136,14 @@ function CourseTimer({ userId, onSimulationSaved }) {
           Authorization: `Bearer ${token}`
         }
       });
-      alert('Rezultatul simulării a fost salvat cu succes în contul utilizatorului!');
+      toast.success('Rezultatul simulării a fost salvat cu succes în contul utilizatorului!');
       if (onSimulationSaved) {
         onSimulationSaved();
       }
       resetAll();
     } catch (error) {
       console.error('Eroare la salvarea rezultatului simulării:', error.response ? error.response.data : error.message);
-      alert('A apărut o eroare la salvarea rezultatului simulării. Verifică consola pentru detalii.');
+      toast.error('A apărut o eroare la salvarea rezultatului simulării. Verifică consola pentru detalii.');
     }
   };
 
@@ -162,13 +161,23 @@ function CourseTimer({ userId, onSimulationSaved }) {
 
   const addPenalty = (obstacle) => {
     if (!timerRunning) {
-      alert("Te rog să pornești cronometrul înainte de a adăuga penalizări.");
+      toast.error("Te rog să pornești cronometrul înainte de a adăuga penalizări.");
       return;
     }
     penaltiesRef.current = [...penaltiesRef.current, obstacle];
+    toast.warn(`Penalizare adăugată pentru: ${obstacle}`);
+    const newPenaltyCount = penaltiesRef.current.length;
+    const totalPenaltySeconds = newPenaltyCount * penaltySeconds;
+    
+    let elapsedSeconds = 0;
+    if (startTimeRef.current) {
+        elapsedSeconds = (Date.now() - startTimeRef.current) / 1000;
+    }
+    const finalTotalSeconds = elapsedSeconds + totalPenaltySeconds;
+
     updateDisplay(
-      finalTimeDisplay.split(': ')[1],
-      penaltyTimeDisplay.split(': ')[1],
+      formatTime(finalTotalSeconds),
+      `${newPenaltyCount} x 3s = ${totalPenaltySeconds}s`,
       penaltiesRef.current.join(', ') || 'Niciunul',
       eliminatedObstaclesRef.current.join(', ') || 'Niciunul',
       javelinTimeDisplay.split(': ')[1]
@@ -177,10 +186,11 @@ function CourseTimer({ userId, onSimulationSaved }) {
 
   const addEliminated = (obstacle) => {
     if (!timerRunning) {
-      alert("Te rog să pornești cronometrul înainte de a marca obstacole eliminate.");
+      toast.error("Te rog să pornești cronometrul înainte de a marca obstacole eliminate.");
       return;
     }
     eliminatedObstaclesRef.current = [...eliminatedObstaclesRef.current, obstacle];
+    toast.error(`Obstacol marcat ca eliminat: ${obstacle}`);
     updateDisplay(
       finalTimeDisplay.split(': ')[1],
       penaltyTimeDisplay.split(': ')[1],
@@ -203,31 +213,29 @@ function CourseTimer({ userId, onSimulationSaved }) {
           Monitorizare Timp Traseu Aplicativ
         </h1>
 
-        {/* Container FIXED/STICKY pentru butoane STOP, JALOANE și CRONOMETRU */}
         <div className="sticky top-0 z-50 bg-white p-2 shadow-md rounded-b-lg -mx-4 sm:-mx-6 lg:-mx-8 mb-4">
-            <div className="flex justify-center gap-2 mb-2">
-                <button
-                  onClick={stopTimer}
-                  className={`flex items-center justify-center px-2 py-1 rounded-lg text-sm font-semibold transition-all duration-300 ${!timerRunning ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 active:bg-red-800 shadow-md hover:shadow-lg'} text-white`}
-                  disabled={!timerRunning}
-                >
-                  Stop Timp
-                </button>
-                <button
-                  onClick={startJavelinTimer}
-                  className={`flex items-center justify-center px-2 py-1 rounded-lg text-sm font-semibold transition-all duration-300 ${javelinTimerActive ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-md hover:shadow-lg'} text-white`}
-                  disabled={javelinTimerActive || !timerRunning}
-                >
-                  Start Timp Jaloane
-                </button>
-            </div>
-            <div className="text-center text-2xl sm:text-3xl font-extrabold text-blue-900 font-mono bg-blue-50 p-2 rounded-lg shadow-inner">
-              {timerDisplay}
-            </div>
+          <div className="text-center text-2xl sm:text-3xl font-extrabold text-blue-900 font-mono bg-blue-50 p-2 rounded-lg shadow-inner">
+            {timerDisplay}
+          </div>
+          <div className="flex justify-center gap-2 mb-2 mt-2">
+            <button
+              onClick={stopTimer}
+              className={`flex items-center justify-center px-6 py-3 rounded-lg text-lg font-semibold transition-all duration-300 ${!timerRunning ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 active:bg-red-800 shadow-md hover:shadow-lg'} text-white`}
+              disabled={!timerRunning}
+            >
+              Stop Timp
+            </button>
+            <button
+              onClick={startJavelinTimer}
+              className={`flex items-center justify-center px-6 py-3 rounded-lg text-lg font-semibold transition-all duration-300 ${javelinTimerActive ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-md hover:shadow-lg'} text-white`}
+              disabled={javelinTimerActive || !timerRunning}
+            >
+              Start Timp Jaloane
+            </button>
+          </div>
         </div>
 
-        {/* Butoanele principale care NU sunt sticky (Start Cursă, Reset) */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 gap-4 mb-8">
           <button
             onClick={startTimer}
             className={`flex items-center justify-center px-4 py-3 rounded-xl text-lg font-semibold transition-all duration-300 ${timerRunning ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 active:bg-green-800 shadow-md hover:shadow-lg'} text-white`}
@@ -243,7 +251,6 @@ function CourseTimer({ userId, onSimulationSaved }) {
           </button>
         </div>
 
-        {/* Secțiunea Obstacole */}
         <div className="mb-8">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 text-center">
             Acțiuni Obstacole
@@ -254,14 +261,14 @@ function CourseTimer({ userId, onSimulationSaved }) {
                 <p className="text-base font-medium text-gray-800 text-center mb-2">{obstacle}</p>
                 <button
                   onClick={() => addPenalty(obstacle)}
-                  className="w-full bg-yellow-500 hover:bg-yellow-600 active:bg-yellow-700 text-white px-4 py-3 rounded-md font-semibold text-base transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-yellow-500 hover:bg-yellow-600 active:bg-yellow-700 text-white px-6 py-3 rounded-md font-semibold text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={!timerRunning}
                 >
                   Penalizare ({penaltySeconds}s)
                 </button>
                 <button
                   onClick={() => addEliminated(obstacle)}
-                  className="w-full bg-red-500 hover:bg-red-600 active:bg-red-700 text-white px-4 py-3 rounded-md font-semibold text-base transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-red-500 hover:bg-red-600 active:bg-red-700 text-white px-6 py-3 rounded-md font-semibold text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={!timerRunning}
                 >
                   Eliminat
@@ -271,7 +278,6 @@ function CourseTimer({ userId, onSimulationSaved }) {
           </div>
         </div>
 
-        {/* Secțiunea Rezultat Curent */}
         <div className="bg-blue-50 p-6 rounded-xl shadow-inner border border-blue-200">
           <h3 className="font-bold text-xl sm:text-2xl text-blue-800 mb-4 text-center">
             Rezultat Curent al Simulării:

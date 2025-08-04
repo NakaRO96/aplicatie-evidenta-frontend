@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { toast } from 'react-toastify';
-import { FaSignOutAlt, FaCalendarAlt, FaChartLine, FaListAlt } from 'react-icons/fa'; // NOU: Am adăugat FaListAlt
+import { FaSignOutAlt, FaCalendarAlt, FaChartLine, FaListAlt } from 'react-icons/fa';
 
 function ClientDashboard() {
   const [user, setUser] = useState(null);
@@ -27,6 +27,9 @@ function ClientDashboard() {
           Authorization: `Bearer ${token}`
         }
       });
+      
+      console.log('Date utilizator primite:', res.data); // Linia pentru verificare
+      
       setUser(res.data.user);
       setSimulationResults(res.data.simulationResults);
     } catch (err) {
@@ -132,7 +135,7 @@ function ClientDashboard() {
           )}
         </div>
 
-        {/* NOU: Secțiunea pentru prezențe */}
+        {/* Secțiunea pentru prezențe */}
         <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-blue-100">
           <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-blue-700 flex items-center gap-3">
             <FaListAlt />
@@ -156,7 +159,7 @@ function ClientDashboard() {
           )}
         </div>
 
-        {/* NOU: Secțiunea pentru rezultate simulări */}
+        {/* Secțiunea pentru rezultate simulări */}
         <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-blue-100">
           <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-blue-700 flex items-center gap-3">
             <FaListAlt />
