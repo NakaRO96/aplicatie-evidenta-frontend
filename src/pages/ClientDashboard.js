@@ -3,12 +3,13 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { toast } from 'react-toastify';
-import { FaSignOutAlt, FaCalendarAlt, FaChartLine, FaListAlt } from 'react-icons/fa';
+// import { toast } from 'react-toastify'; // Notificările Toast nu mai sunt folosite
+import { FaSignOutAlt, FaCalendarAlt, FaChartLine, FaListAlt, FaTrophy } from 'react-icons/fa';
 
 function ClientDashboard() {
   const [user, setUser] = useState(null);
   const [simulationResults, setSimulationResults] = useState([]);
+  const [topSimulations, setTopSimulations] = useState([]);
   const { user: authUser, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -37,15 +38,36 @@ function ClientDashboard() {
       if (err.response && err.response.status === 401) {
         logout();
         navigate('/login');
-        toast.error('Sesiunea a expirat. Te rugăm să te autentifici din nou.');
+        // toast.error('Sesiunea a expirat. Te rugăm să te autentifici din nou.');
       } else {
-        toast.error('A apărut o eroare la preluarea datelor tale. Te rugăm să încerci din nou.');
+        // toast.error('A apărut o eroare la preluarea datelor tale. Te rugăm să încerci din nou.');
       }
+    }
+  };
+
+  const fetchTopSimulations = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      // Aici am presupus că există un endpoint /api/simulations/top care returnează cele mai bune rezultate.
+      const res = await axios.get(`${BACKEND_URL}/api/simulations/top`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      // Sortăm rezultatele și luăm primele 3
+      const sortedResults = res.data
+        .sort((a, b) => a.totalTime - b.totalTime)
+        .slice(0, 3);
+      setTopSimulations(sortedResults);
+    } catch (err) {
+      console.error('Eroare la preluarea topului simulărilor:', err);
+      // Puteți afișa un mesaj de eroare în consolă, dar nu direct în UI dacă nu doriți
     }
   };
 
   useEffect(() => {
     fetchClientData();
+    fetchTopSimulations();
   }, [authUser]);
 
   const handleLogout = () => {
@@ -94,6 +116,33 @@ function ClientDashboard() {
         <div className="flex justify-between items-center mb-8 pt-16 sm:pt-4">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-blue-800 tracking-tight">Bun venit, {user.name}!</h1>
         </div>
+        
+        {/* Secțiunea pentru top 3 simulări */}
+        {topSimulations.length > 0 && (
+          <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-blue-100">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-blue-700 flex items-center gap-3">
+              <FaTrophy className="text-yellow-500" />
+              Top 3 Cele Mai Bune Timpuri
+            </h2>
+            <ul className="list-none space-y-4">
+              {topSimulations.map((result, index) => (
+                <li key={result._id} className="flex items-center justify-between p-4 bg-blue-50 rounded-lg shadow-sm">
+                  <div className="flex items-center space-x-4">
+                    <span className="text-xl font-bold text-gray-800 w-8 text-center">
+                      #{index + 1}
+                    </span>
+                    <span className="text-lg font-medium text-blue-600">
+                      {result.userName}
+                    </span>
+                  </div>
+                  <span className="text-xl font-bold text-gray-900 font-mono">
+                    {formatSecondsToMMSS(result.totalTime)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-blue-100">
           <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-blue-700 flex items-center gap-3">
