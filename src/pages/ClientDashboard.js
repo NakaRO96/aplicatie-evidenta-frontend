@@ -27,8 +27,8 @@ function ClientDashboard() {
           Authorization: `Bearer ${token}`
         }
       });
-      
-      console.log('Date utilizator primite:', res.data); // Linia pentru verificare
+
+      console.log('Date utilizator primite:', res.data);
       
       setUser(res.data.user);
       setSimulationResults(res.data.simulationResults);
@@ -186,9 +186,9 @@ function ClientDashboard() {
                       <td className="py-3 px-4 sm:px-6 font-mono">{formatSecondsToMMSS(result.rawTime)}</td>
                       <td className="py-3 px-4 sm:px-6">{result.penaltyTime}s</td>
                       <td className="py-3 px-4 sm:px-6 font-mono font-bold text-blue-700">{formatSecondsToMMSS(result.totalTime)}</td>
-                      <td className="py-3 px-4 sm:px-6 font-mono">{result.checkpointTimes ? result.checkpointTimes.map(t => formatSecondsToMMSS(t)).join(', ') : '-'}</td>
+                      <td className="py-3 px-4 sm:px-6 font-mono">{result.javelinTime ? formatSecondsToMMSS(result.javelinTime) : '-'}</td>
                       <td className="py-3 px-4 sm:px-6">{result.penaltiesList?.length > 0 ? result.penaltiesList.join(', ') : '-'}</td>
-                      <td className="py-3 px-4 sm:px-6">{result.eliminatedObstacles?.length > 0 ? result.eliminatedObstacles.join(', ') : '-'}</td>
+                      <td className="py-3 px-4 sm:px-6">{result.eliminatedObstaclesList?.length > 0 ? result.eliminatedObstaclesList.join(', ') : '-'}</td>
                     </tr>
                   ))}
                 </tbody>

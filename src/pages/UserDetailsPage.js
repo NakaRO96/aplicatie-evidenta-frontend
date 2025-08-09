@@ -2,19 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import CourseTimer from '../components/CourseTimer'; // Importă componenta cronometrului
-import { toast } from 'react-toastify'; // NOU: Importă toast
+import CourseTimer from '../components/CourseTimer';
+import { toast } from 'react-toastify';
 
 function UserDetailsPage() {
-  const { id } = useParams(); // ID-ul utilizatorului din URL
+  const { id } = useParams();
   const [user, setUser] = useState(null);
   const [simulationResults, setSimulationResults] = useState([]);
-  const [showTimer, setShowTimer] = useState(false); // Stare pentru a afișa/ascunde cronometrul
-  const [editMode, setEditMode] = useState(false); // Stare pentru modul de editare
-  const [editedUser, setEditedUser] = useState({}); // Stare pentru datele editate
-  const [attendanceDate, setAttendanceDate] = useState(''); // Pentru adăugare prezență
+  const [showTimer, setShowTimer] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editedUser, setEditedUser] = useState({});
+  const [attendanceDate, setAttendanceDate] = useState('');
   const [attendanceError, setAttendanceError] = useState('');
-  const { logout } = useAuth(); // Obține funcția de logout din context
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
   const BACKEND_URL = 'https://aplicatie-evidenta-backend.onrender.com';
@@ -29,7 +29,7 @@ function UserDetailsPage() {
       });
       setUser(res.data.user);
       setSimulationResults(res.data.simulationResults);
-      setEditedUser(res.data.user); // Inițializează datele editabile
+      setEditedUser(res.data.user);
     } catch (err) {
       console.error('Eroare la preluarea detaliilor utilizatorului:', err);
       if (err.response && err.response.status === 401) {
@@ -149,6 +149,22 @@ function UserDetailsPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200 text-xl font-semibold text-blue-800">
         Se încarcă detaliile utilizatorului...
+      </div>
+    );
+  }
+
+  // NOU: Randare full-screen a cronometrului
+  if (showTimer) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200 p-4 sm:p-6 lg:p-8 font-sans antialiased flex items-center justify-center">
+        <CourseTimer 
+          userId={user._id} 
+          onSimulationSaved={() => {
+            setShowTimer(false);
+            fetchUserDetails();
+          }} 
+          onCancel={() => setShowTimer(false)} // NOU: Prop pentru a anula simularea
+        />
       </div>
     );
   }
@@ -295,7 +311,7 @@ function UserDetailsPage() {
         </div>
 
         {/* Secțiunea Adaugă Simulare */}
-        <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-emerald-100">
+        <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-emerald-100 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-emerald-700">Adaugă Simulare Traseu Aplicativ</h2>
           {!showTimer ? (
             <button
@@ -304,20 +320,7 @@ function UserDetailsPage() {
             >
               Start Simularea Traseului
             </button>
-          ) : (
-            <div>
-              <CourseTimer userId={user._id} onSimulationSaved={() => {
-                setShowTimer(false);
-                fetchUserDetails();
-              }} />
-              <button
-                onClick={() => setShowTimer(false)}
-                className="mt-6 bg-gray-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-600 active:bg-gray-700 transition-all duration-300 shadow-md hover:shadow-lg"
-              >
-                Anulează Simularea
-              </button>
-            </div>
-          )}
+          ) : null}
         </div>
 
         {/* Secțiunea Rezultate Simulări */}
