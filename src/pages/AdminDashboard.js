@@ -2,43 +2,69 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { toast } from 'react-toastify';
-import { FaUserPlus, FaInfoCircle, FaTrashAlt } from 'react-icons/fa'; // NOU: Importă iconițele necesare
+// import { toast } from 'react-toastify'; // Notificările Toast nu mai sunt folosite
+import { FaUserPlus, FaInfoCircle, FaTrashAlt, FaTrophy } from 'react-icons/fa'; // NOU: Iconița pentru Top 3
 
 function AdminDashboard() {
   const [users, setUsers] = useState([]);
+  const [topSimulations, setTopSimulations] = useState([]); // NOU: State pentru top 3
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // NOU: State pentru paginare
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
+
   const { logout } = useAuth();
   const navigate = useNavigate();
 
   const BACKEND_URL = 'https://aplicatie-evidenta-backend.onrender.com';
 
-  const fetchUsers = async () => {
+  // NOU: Funcția pentru a prelua top 3 simulări
+  const fetchTopSimulations = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${BACKEND_URL}/api/users?filter=${filter}`, {
+      const res = await axios.get(`${BACKEND_URL}/api/simulations/top`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
-      setUsers(res.data);
+      setTopSimulations(res.data);
+    } catch (err) {
+      console.error('Eroare la preluarea topului simulărilor:', err);
+    }
+  };
+
+  const fetchUsers = async (page = 1) => {
+    try {
+      const token = localStorage.getItem('token');
+      // MODIFICAT: Trimite parametri de paginare către backend
+      const res = await axios.get(`${BACKEND_URL}/api/users?filter=${filter}&page=${page}&limit=${itemsPerPage}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setUsers(res.data.users);
+      setTotalPages(res.data.totalPages);
+      setCurrentPage(res.data.currentPage);
     } catch (err) {
       console.error('Eroare la preluarea utilizatorilor:', err.response ? err.response.data : err.message);
       if (err.response && err.response.status === 401) {
         logout();
         navigate('/login');
-        toast.error('Sesiunea a expirat. Te rugăm să te autentifici din nou.');
+        // toast.error('Sesiunea a expirat. Te rugăm să te autentifici din nou.');
       } else if (err.response && err.response.status === 403) {
-        toast.error('Acces neautorizat la resursă.');
+        // toast.error('Acces neautorizat la resursă.');
       } else {
-        toast.error('A apărut o eroare la preluarea utilizatorilor.');
+        // toast.error('A apărut o eroare la preluarea utilizatorilor.');
       }
     }
   };
 
   useEffect(() => {
-    fetchUsers();
+    fetchUsers(1); // Reîncarcă prima pagină la schimbarea filtrului
+    fetchTopSimulations(); // Încarcă top 3 la inițializarea componentei
   }, [filter]);
 
   const handleLogout = () => {
@@ -55,20 +81,26 @@ function AdminDashboard() {
             Authorization: `Bearer ${token}`
           }
         });
-        toast.success(`Utilizatorul ${userName} a fost șters cu succes.`);
-        fetchUsers();
+        // toast.success(`Utilizatorul ${userName} a fost șters cu succes.`);
+        fetchUsers(currentPage); // Reîncarcă pagina curentă
       } catch (err) {
         console.error('Eroare la ștergerea utilizatorului:', err);
         if (err.response && err.response.status === 401) {
           logout();
           navigate('/login');
-          toast.error('Sesiunea a expirat. Te rugăm să te autentifici din nou.');
+          // toast.error('Sesiunea a expirat. Te rugăm să te autentifici din nou.');
         } else if (err.response && err.response.status === 403) {
-          toast.error('Acces neautorizat. Nu ai permisiunea de a șterge utilizatori.');
+          // toast.error('Acces neautorizat. Nu ai permisiunea de a șterge utilizatori.');
         } else {
-          toast.error('A apărut o eroare la ștergerea utilizatorului.');
+          // toast.error('A apărut o eroare la ștergerea utilizatorului.');
         }
       }
+    }
+  };
+
+  const handlePageChange = (page) => {
+    if (page > 0 && page <= totalPages) {
+      fetchUsers(page);
     }
   };
 
@@ -88,9 +120,9 @@ function AdminDashboard() {
           <div className="flex flex-col sm:flex-row gap-3">
             <Link
               to="/admin/create-account"
-              className="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 active:bg-green-800 transition-all duration-300 shadow-md hover:shadow-lg text-center flex items-center justify-center gap-2" // MODIFICAT: Adăugat `flex items-center gap-2`
+              className="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 active:bg-green-800 transition-all duration-300 shadow-md hover:shadow-lg text-center flex items-center justify-center gap-2"
             >
-              <FaUserPlus /> {/* NOU: Iconița pentru "Creează Cont Nou" */}
+              <FaUserPlus />
               Creează Cont Nou
             </Link>
             <button
@@ -101,6 +133,33 @@ function AdminDashboard() {
             </button>
           </div>
         </div>
+
+        {/* NOU: Secțiunea pentru top 3 simulări */}
+        {topSimulations.length > 0 && (
+          <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-blue-100">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-blue-700 flex items-center gap-3">
+              <FaTrophy className="text-yellow-500" />
+              Top 3 Cele Mai Bune Timpuri
+            </h2>
+            <ul className="list-none space-y-4">
+              {topSimulations.map((result, index) => (
+                <li key={result._id} className="flex items-center justify-between p-4 bg-blue-50 rounded-lg shadow-sm">
+                  <div className="flex items-center space-x-4">
+                    <span className="text-xl font-bold text-gray-800 w-8 text-center">
+                      #{index + 1}
+                    </span>
+                    <span className="text-lg font-medium text-blue-600">
+                      {result.userName}
+                    </span>
+                  </div>
+                  <span className="text-xl font-bold text-gray-900 font-mono">
+                    {formatSecondsToMMSS(result.totalTime)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Filtre și Căutare */}
         <div className="bg-white shadow-lg rounded-xl p-6 mb-8 flex flex-col sm:flex-row items-center gap-4">
@@ -132,62 +191,95 @@ function AdminDashboard() {
           {filteredUsers.length === 0 ? (
             <p className="text-gray-600 text-lg text-center py-4">Nu există utilizatori înregistrați conform filtrului și căutării selectate.</p>
           ) : (
-            <div className="overflow-x-auto relative shadow-md rounded-lg">
-              <table className="min-w-full bg-white text-left">
-                <thead className="bg-blue-50 border-b border-blue-200 hidden md:table-header-group">
-                  <tr>
-                    <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700">Nume</th>
-                    <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700">Număr Telefon</th>
-                    <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700">Abonament Expiră</th>
-                    <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700">Rol</th>
-                    <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700">Acțiuni</th>
-                  </tr>
-                </thead>
-                <tbody className="block md:table-row-group">
-                  {filteredUsers.map((user) => (
-                    <tr key={user._id} className="border-b border-gray-200 md:table-row md:hover:bg-blue-50 transition-colors duration-150 block md:p-4 md:rounded-xl md:shadow-md md:bg-white md:mb-0 mb-4 p-4 rounded-xl shadow-md bg-white">
-                      <td data-label="Nume" className="py-2 px-0 block md:table-cell md:py-3 md:px-6 font-semibold text-gray-700 md:text-gray-900">
-                        <span className="md:hidden text-gray-500 font-normal block">Nume:</span>
-                        {user.name}
-                      </td>
-                      <td data-label="Număr Telefon" className="py-2 px-0 block md:table-cell md:py-3 md:px-6">
-                        <span className="md:hidden text-gray-500 font-normal block">Număr Telefon:</span>
-                        {user.phoneNumber}
-                      </td>
-                      <td data-label="Abonament Expiră" className="py-2 px-0 block md:table-cell md:py-3 md:px-6">
-                        <span className="md:hidden text-gray-500 font-normal block">Abonament Expiră:</span>
-                        {user.subscriptionEndDate ? new Date(user.subscriptionEndDate).toLocaleDateString('ro-RO') : 'N/A'}
-                      </td>
-                      <td data-label="Rol" className="py-2 px-0 block md:table-cell md:py-3 md:px-6">
-                        <span className="md:hidden text-gray-500 font-normal block">Rol:</span>
-                        {user.role}
-                      </td>
-                      <td data-label="Acțiuni" className="py-2 px-0 flex flex-col sm:flex-row gap-2 md:table-cell md:py-3 md:px-6">
-                        <Link
-                          to={`/admin/users/${user._id}`}
-                          className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-blue-600 active:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md text-center flex items-center justify-center gap-1" // MODIFICAT: Adăugat `flex items-center gap-1`
-                        >
-                          <FaInfoCircle /> {/* NOU: Iconița pentru "Detalii" */}
-                          Detalii
-                        </Link>
-                        <button
-                          onClick={() => handleDeleteUser(user._id, user.name)}
-                          className="bg-red-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-red-600 active:bg-red-700 transition-all duration-200 shadow-sm hover:shadow-md text-center flex items-center justify-center gap-1" // MODIFICAT: Adăugat `flex items-center gap-1`
-                        >
-                          <FaTrashAlt /> {/* NOU: Iconița pentru "Șterge" */}
-                          Șterge
-                        </button>
-                      </td>
+            <>
+              <div className="overflow-x-auto relative shadow-md rounded-lg">
+                <table className="min-w-full bg-white text-left">
+                  <thead className="bg-blue-50 border-b border-blue-200 hidden md:table-header-group">
+                    <tr>
+                      <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700">Nume</th>
+                      <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700">Număr Telefon</th>
+                      <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700">Abonament Expiră</th>
+                      <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700">Rol</th>
+                      <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700">Acțiuni</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="block md:table-row-group">
+                    {filteredUsers.map((user) => (
+                      <tr key={user._id} className="border-b border-gray-200 md:table-row md:hover:bg-blue-50 transition-colors duration-150 block md:p-4 md:rounded-xl md:shadow-md md:bg-white md:mb-0 mb-4 p-4 rounded-xl shadow-md bg-white">
+                        <td data-label="Nume" className="py-2 px-0 block md:table-cell md:py-3 md:px-6 font-semibold text-gray-700 md:text-gray-900">
+                          <span className="md:hidden text-gray-500 font-normal block">Nume:</span>
+                          {user.name}
+                        </td>
+                        <td data-label="Număr Telefon" className="py-2 px-0 block md:table-cell md:py-3 md:px-6">
+                          <span className="md:hidden text-gray-500 font-normal block">Număr Telefon:</span>
+                          {user.phoneNumber}
+                        </td>
+                        <td data-label="Abonament Expiră" className="py-2 px-0 block md:table-cell md:py-3 md:px-6">
+                          <span className="md:hidden text-gray-500 font-normal block">Abonament Expiră:</span>
+                          {user.subscriptionEndDate ? new Date(user.subscriptionEndDate).toLocaleDateString('ro-RO') : 'N/A'}
+                        </td>
+                        <td data-label="Rol" className="py-2 px-0 block md:table-cell md:py-3 md:px-6">
+                          <span className="md:hidden text-gray-500 font-normal block">Rol:</span>
+                          {user.role}
+                        </td>
+                        <td data-label="Acțiuni" className="py-2 px-0 flex flex-col sm:flex-row gap-2 md:table-cell md:py-3 md:px-6">
+                          <Link
+                            to={`/admin/users/${user._id}`}
+                            className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-blue-600 active:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md text-center flex items-center justify-center gap-1"
+                          >
+                            <FaInfoCircle />
+                            Detalii
+                          </Link>
+                          <button
+                            onClick={() => handleDeleteUser(user._id, user.name)}
+                            className="bg-red-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-red-600 active:bg-red-700 transition-all duration-200 shadow-sm hover:shadow-md text-center flex items-center justify-center gap-1"
+                          >
+                            <FaTrashAlt />
+                            Șterge
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* NOU: Controale de paginare */}
+              <div className="flex justify-center items-center mt-4 space-x-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-400 transition-colors duration-200"
+                >
+                  &laquo; Precedenta
+                </button>
+                <span className="text-lg font-semibold text-gray-800">
+                  Pagina {currentPage} din {totalPages}
+                </span>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-400 transition-colors duration-200"
+                >
+                  Urmatoarea &raquo;
+                </button>
+              </div>
+            </>
           )}
         </div>
       </div>
     </div>
   );
 }
+
+// Helper function to format time in MM:SS (adăugată aici pentru a fi disponibilă)
+const formatSecondsToMMSS = (totalSeconds) => {
+    if (totalSeconds === null || totalSeconds === undefined) {
+      return '-';
+    }
+    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+    const seconds = String(Math.floor(totalSeconds % 60)).padStart(2, '0');
+    return `${minutes}:${seconds}`;
+};
 
 export default AdminDashboard;

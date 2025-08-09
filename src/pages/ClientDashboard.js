@@ -122,7 +122,7 @@ function ClientDashboard() {
           <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-blue-100">
             <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-blue-700 flex items-center gap-3">
               <FaTrophy className="text-yellow-500" />
-              Top 3 Cele Mai Bune Timpuri
+              Top 3 timp traseu
             </h2>
             <ul className="list-none space-y-4">
               {topSimulations.map((result, index) => (
