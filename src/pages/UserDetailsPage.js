@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import CourseTimer from '../components/CourseTimer';
 import { toast } from 'react-toastify';
+import { FaRunning } from 'react-icons/fa'; // NOU: Iconița pentru încărcare
 
 function UserDetailsPage() {
   const { id } = useParams();
@@ -14,6 +15,7 @@ function UserDetailsPage() {
   const [editedUser, setEditedUser] = useState({});
   const [attendanceDate, setAttendanceDate] = useState('');
   const [attendanceError, setAttendanceError] = useState('');
+  const [isLoading, setIsLoading] = useState(true); // NOU: Stare de încărcare
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -41,10 +43,13 @@ function UserDetailsPage() {
       } else {
         toast.error('A apărut o eroare la preluarea detaliilor utilizatorului.');
       }
+    } finally {
+      setIsLoading(false); // Încărcarea s-a terminat, indiferent de rezultat
     }
   };
 
   useEffect(() => {
+    setIsLoading(true); // Începe încărcarea la montare
     fetchUserDetails();
   }, [id, showTimer]);
 
@@ -145,10 +150,11 @@ function UserDetailsPage() {
     }
   };
 
-  if (!user) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200 text-xl font-semibold text-blue-800">
-        Se încarcă detaliile utilizatorului...
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200 text-xl font-semibold text-blue-800">
+        <FaRunning className="text-blue-500 text-6xl mb-4 animate-bounce" />
+        <p className="text-2xl font-bold text-gray-700">Se încarcă detaliile utilizatorului...</p>
       </div>
     );
   }
@@ -163,13 +169,12 @@ function UserDetailsPage() {
             setShowTimer(false);
             fetchUserDetails();
           }} 
-          onCancel={() => setShowTimer(false)} // NOU: Prop pentru a anula simularea
+          onCancel={() => setShowTimer(false)}
         />
       </div>
     );
   }
 
-  // Helper function to format time in HH:MM:SS or MM:SS
   const formatSecondsToMMSS = (totalSeconds) => {
     if (totalSeconds === null || totalSeconds === undefined) {
       return '-';
