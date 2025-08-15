@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import CourseTimer from '../components/CourseTimer';
 import { toast } from 'react-toastify';
-import { FaRunning } from 'react-icons/fa'; // NOU: Iconița pentru încărcare
+import { FaRunning } from 'react-icons/fa';
 
 function UserDetailsPage() {
   const { id } = useParams();
@@ -15,7 +15,9 @@ function UserDetailsPage() {
   const [editedUser, setEditedUser] = useState({});
   const [attendanceDate, setAttendanceDate] = useState('');
   const [attendanceError, setAttendanceError] = useState('');
-  const [isLoading, setIsLoading] = useState(true); // NOU: Stare de încărcare
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadingMessage, setLoadingMessage] = useState("Se încarcă detaliile utilizatorului..."); // NOU: Mesaj dinamic
+  
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -44,13 +46,26 @@ function UserDetailsPage() {
         toast.error('A apărut o eroare la preluarea detaliilor utilizatorului.');
       }
     } finally {
-      setIsLoading(false); // Încărcarea s-a terminat, indiferent de rezultat
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    setIsLoading(true); // Începe încărcarea la montare
+    setIsLoading(true);
+    setLoadingMessage("Se încarcă detaliile utilizatorului...");
+
+    // Timeout de 15 secunde pentru a preveni blocarea
+    const timeoutId = setTimeout(() => {
+      if (isLoading) {
+        setIsLoading(false);
+        setLoadingMessage("Eroare de rețea. Te rugăm să reîmprospătezi pagina.");
+      }
+    }, 15000);
+
     fetchUserDetails();
+
+    // Curățăm timeout-ul dacă componenta se demontează sau dacă se încarcă datele
+    return () => clearTimeout(timeoutId);
   }, [id, showTimer]);
 
   const handleUpdateUser = async () => {
@@ -154,7 +169,7 @@ function UserDetailsPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200 text-xl font-semibold text-blue-800">
         <FaRunning className="text-blue-500 text-6xl mb-4 animate-bounce" />
-        <p className="text-2xl font-bold text-gray-700">Se încarcă detaliile utilizatorului...</p>
+        <p className="text-2xl font-bold text-gray-700">{loadingMessage}</p>
       </div>
     );
   }
