@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
-import { FaPhone, FaLock, FaSignInAlt, FaQuestionCircle, FaEye, FaEyeSlash } from 'react-icons/fa'; // NOU: Importă FaEye, FaEyeSlash
+import { FaPhone, FaLock, FaSignInAlt, FaQuestionCircle, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 function LoginPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false); // NOU: Stare pentru vizibilitatea parolei
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -21,12 +21,16 @@ function LoginPage() {
 
     const result = await login(phoneNumber, password);
     if (result.success) {
-      if (result.role === 'admin') {
-        navigate('/admin');
-      } else {
-        navigate('/client');
-      }
       toast.success('Autentificare reușită!');
+      // NOU: Adăugăm o scurtă întârziere pentru a permite contextului de autentificare să se actualizeze complet
+      // și să forțeze re-randarea PrivateRoute înainte de navigare.
+      setTimeout(() => {
+        if (result.role === 'admin' || result.role === 'trainer') {
+          navigate('/admin');
+        } else {
+          navigate('/client-dashboard'); // MODIFICAT: Calea corectă pentru dashboard-ul clientului
+        }
+      }, 50); // 50ms întârziere
     } else {
       toast.error(result.error || 'Autentificare eșuată. Verifică credențialele.');
     }
@@ -46,7 +50,7 @@ function LoginPage() {
                 <FaPhone />
               </span>
               <input
-                type="tel" // MODIFICAT: Tip "tel" pentru tastatura numerică pe mobil
+                type="tel"
                 id="phoneNumber"
                 className="shadow appearance-none border border-gray-300 rounded w-full py-2 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-500"
                 value={phoneNumber}
@@ -64,19 +68,19 @@ function LoginPage() {
                 <FaLock />
               </span>
               <input
-                type={showPassword ? 'text' : 'password'} // NOU: Tip dinamic pentru vizibilitatea parolei
+                type={showPassword ? 'text' : 'password'}
                 id="password"
-                className="shadow appearance-none border border-gray-300 rounded w-full py-2 pl-10 pr-10 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-500" // MODIFICAT: Adăugat `pr-10` pentru butonul ochi
+                className="shadow appearance-none border border-gray-300 rounded w-full py-2 pl-10 pr-10 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-500"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)} // NOU: Toggle vizibilitate
-                className="absolute inset-y-0 right-0 top-0 pr-3 flex items-center text-gray-400 hover:text-blue-500 transition-colors duration-200 focus:outline-none h-full" // Ajustat h-full
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 top-0 pr-3 flex items-center text-gray-400 hover:text-blue-500 transition-colors duration-200 focus:outline-none h-full"
               >
-                {showPassword ? <FaEyeSlash /> : <FaEye />} {/* NOU: Iconița ochi */}
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
               </button>
             </div>
           </div>
