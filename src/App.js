@@ -1,46 +1,83 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 import LoginPage from './pages/LoginPage';
 import AdminDashboard from './pages/AdminDashboard';
-import ClientDashboard from './pages/ClientDashboard';
 import CreateAccountPage from './pages/CreateAccountPage';
 import UserDetailsPage from './pages/UserDetailsPage';
-import PrivateRoute from './components/PrivateRoute';
-import { AuthProvider } from './context/AuthContext';
-import ForgotPassword from './components/ForgotPassword';
-import ResetPassword from './components/ResetPassword'; // Asigură-te că ai importat și ResetPassword
-import { ToastContainer } from 'react-toastify'; // NOU: Importă ToastContainer
-import 'react-toastify/dist/ReactToastify.css'; // NOU: Importă stilurile CSS
+import ChangePasswordPage from './pages/ChangePasswordPage'; // NOU: Importă noua pagină de schimbare a parolei
+import NotFoundPage from './pages/NotFoundPage';
+
+import { AuthProvider, useAuth } from './context/AuthContext';
+import Header from './components/Header'; // NOU: Importă componenta Header
+
+const PrivateRoute = ({ children, allowedRoles }) => {
+  const { isAuthenticated, userRole } = useAuth();
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+  if (allowedRoles && !allowedRoles.includes(userRole)) {
+    // Navighează către o pagină de "acces neautorizat" sau înapoi la login,
+    // în funcție de logica dorită pentru utilizatorii fără rolul necesar.
+    // Aici, am lăsat navigherea către '/' care duce la /admin.
+    return <Navigate to="/" />; 
+  }
+  return children;
+};
 
 function App() {
   return (
     <Router>
       <AuthProvider>
+        {/* NOU: Adaugă Header-ul aici pentru a fi vizibil pe toate paginile */}
+        {/* Acesta va apărea deasupra conținutului rutelor */}
+        <Header />
+        
         <Routes>
-          {/* Rute publice, accesibile fără autentificare */}
+          <Route path="/" element={<Navigate to="/admin" />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/create-first-admin" element={<CreateAccountPage />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
-          <Route path="/" element={<Navigate to="/login" replace />} />
-
-          {/* Rute protejate pentru Admin */}
-          <Route path="/admin" element={<PrivateRoute requiredRole="admin" />}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="create-account" element={<CreateAccountPage />} />
-            <Route path="users/:id" element={<UserDetailsPage />} />
-          </Route>
-
-          {/* Rută protejată pentru Client */}
-          <Route path="/client" element={<PrivateRoute requiredRole="client" />}>
-            <Route index element={<ClientDashboard />} />
-          </Route>
-
-          {/* Fallback pentru rute nedefinite */}
-          <Route path="*" element={<h1 className="text-center text-4xl mt-20 text-red-600">404 - Pagina nu a fost găsită</h1>} />
+          
+          <Route
+            path="/admin"
+            element={
+              <PrivateRoute allowedRoles={['admin', 'trainer']}>
+                <AdminDashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin/create-account"
+            element={
+              <PrivateRoute allowedRoles={['admin', 'trainer']}>
+                <CreateAccountPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin/users/:id"
+            element={
+              <PrivateRoute allowedRoles={['admin', 'trainer']}>
+                <UserDetailsPage />
+              </PrivateRoute>
+            }
+          />
+          {/* NOU: Ruta pentru pagina de schimbare a parolei */}
+          <Route
+            path="/admin/change-password"
+            element={
+              <PrivateRoute allowedRoles={['admin', 'trainer']}>
+                <ChangePasswordPage />
+              </PrivateRoute>
+            }
+          />
+          
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        {/* ToastContainer pentru notificări (rămas așa cum era) */}
+        <ToastContainer position="bottom-right" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       </AuthProvider>
-      <ToastContainer /> {/* NOU: Adaugă container-ul pentru notificări */}
     </Router>
   );
 }

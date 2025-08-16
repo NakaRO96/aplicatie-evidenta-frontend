@@ -37,7 +37,7 @@ function AdminDashboard() {
   const fetchUsers = async (page = 1) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${BACKEND_URL}/api/users?filter=${filter}&page=${page}&limit=${itemsPerPage}`, {
+      const res = await axios.get(`${BACKEND_URL}/api/users?filter=${filter}&page=${page}&limit=${itemsPerPage}&searchQuery=${searchQuery}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -54,8 +54,9 @@ function AdminDashboard() {
     }
   };
 
+  // NOU: Acest useEffect se va rula o singură dată la montarea componentei
   useEffect(() => {
-    const loadData = async () => {
+    const loadInitialData = async () => {
       setIsLoading(true);
       await Promise.all([
         fetchUsers(1),
@@ -63,8 +64,17 @@ function AdminDashboard() {
       ]);
       setIsLoading(false);
     };
-    loadData();
-  }, [filter]);
+    loadInitialData();
+  }, []);
+
+  // NOU: Acest useEffect se va rula de fiecare dată când se schimbă `filter` sau `searchQuery`
+  // Nu modifică starea `isLoading`, astfel că ecranul de încărcare nu va mai apărea
+  useEffect(() => {
+    // Verificăm dacă nu este prima încărcare (când `isLoading` era true)
+    if (!isLoading) {
+      fetchUsers(1);
+    }
+  }, [filter, searchQuery]);
 
   const handleLogout = () => {
     logout();
@@ -96,12 +106,7 @@ function AdminDashboard() {
       fetchUsers(page);
     }
   };
-
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.phoneNumber.includes(searchQuery)
-  );
-
+  
   const formatSecondsToMMSS = (totalSeconds) => {
     if (totalSeconds === null || totalSeconds === undefined) {
       return '-';
@@ -193,12 +198,11 @@ function AdminDashboard() {
 
             <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 border border-blue-100">
               <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-blue-700">Lista Utilizatorilor</h2>
-              {filteredUsers.length === 0 ? (
+              {users.length === 0 ? (
                 <p className="text-gray-600 text-lg text-center py-4">Nu există utilizatori înregistrați conform filtrului și căutării selectate.</p>
               ) : (
                 <>
                   <div className="overflow-x-auto relative shadow-md rounded-lg">
-                    {/* MODIFICAT: Structura tabelului este acum aceeași pe mobil și desktop */}
                     <table className="min-w-full bg-white text-left table-auto">
                       <thead className="bg-blue-50 border-b border-blue-200">
                         <tr>
@@ -210,7 +214,7 @@ function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredUsers.map((user) => (
+                        {users.map((user) => (
                           <tr key={user._id} className="border-b border-gray-200 hover:bg-blue-50 transition-colors duration-150">
                             <td className="py-4 px-4 sm:px-6 font-semibold text-gray-900 whitespace-nowrap">{user.name}</td>
                             <td className="py-4 px-4 sm:px-6 whitespace-nowrap">{user.phoneNumber}</td>
@@ -219,14 +223,14 @@ function AdminDashboard() {
                             <td className="py-4 px-4 sm:px-6 flex flex-col sm:flex-row gap-2">
                               <Link
                                 to={`/admin/users/${user._id}`}
-                                className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-blue-600 active:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md text-center flex items-center justify-center gap-1 w-full sm:w-auto" // MODIFICAT: am adăugat `w-full` și am păstrat `sm:w-auto`
+                                className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-blue-600 active:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md text-center flex items-center justify-center gap-1 w-full sm:w-auto"
                               >
                                 <FaInfoCircle />
                                 Detalii
                               </Link>
                               <button
                                 onClick={() => handleDeleteUser(user._id, user.name)}
-                                className="bg-red-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-red-600 active:bg-red-700 transition-all duration-200 shadow-sm hover:shadow-md text-center flex items-center justify-center gap-1 w-full sm:w-auto" // MODIFICAT: am adăugat `w-full` și am păstrat `sm:w-auto`
+                                className="bg-red-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-red-600 active:bg-red-700 transition-all duration-200 shadow-sm hover:shadow-md text-center flex items-center justify-center gap-1 w-full sm:w-auto"
                               >
                                 <FaTrashAlt />
                                 Șterge
