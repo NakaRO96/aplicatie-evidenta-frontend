@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
-// CORECTAT: Calea de import pentru CSS-ul react-toastify a fost ajustată la forma standard.
 import 'react-toastify/dist/ReactToastify.css'; 
 
 import LoginPage from './pages/LoginPage';
@@ -10,7 +9,7 @@ import CreateAccountPage from './pages/CreateAccountPage';
 import UserDetailsPage from './pages/UserDetailsPage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
 import NotFoundPage from './pages/NotFoundPage';
-import ClientDashboard from './pages/ClientDashboard.js';
+import ClientDashboard from './pages/ClientDashboard.js'; // Asigură-te că fișierul este numit ClientDashboard.js
 
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Header from './components/Header';
@@ -33,7 +32,6 @@ function App() {
         <Header />
         
         <Routes>
-          {/* Redirecționează '/' direct către '/login' */}
           <Route path="/" element={<Navigate to="/login" />} />
           <Route path="/login" element={<LoginPage />} />
           
@@ -61,6 +59,7 @@ function App() {
                   </PrivateRoute>
                 }
               />
+              {/* MODIFICAT: Permite accesul și pentru rolul 'client' la schimbarea parolei */}
               <Route
                 path="/admin/change-password"
                 element={
@@ -69,12 +68,11 @@ function App() {
                   </PrivateRoute>
                 }
               />
-              {/* Acum randează componenta ClientDashboard, folosind importul corect */}
               <Route
                 path="/client-dashboard"
                 element={
                   <PrivateRoute allowedRoles={['client']}>
-                    <ClientDashboard /> {/* Utilizăm componenta ClientDashboard */}
+                    <ClientDashboard />
                   </PrivateRoute>
                 }
               />
