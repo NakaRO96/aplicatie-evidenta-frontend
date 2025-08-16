@@ -1,7 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/React-toastify.css';
+// CORECTAT: Calea de import pentru CSS-ul react-toastify a fost ajustată la forma standard.
+import 'react-toastify/dist/ReactToastify.css'; 
 
 import LoginPage from './pages/LoginPage';
 import AdminDashboard from './pages/AdminDashboard';
@@ -9,7 +10,7 @@ import CreateAccountPage from './pages/CreateAccountPage';
 import UserDetailsPage from './pages/UserDetailsPage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
 import NotFoundPage from './pages/NotFoundPage';
-import ClientDashboard from './pages/ClientDashboard.js'; // CORECTAT: Calea de import corectă către ClientDashboard.js
+import ClientDashboard from './pages/ClientDashboard.js';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Header from './components/Header';
