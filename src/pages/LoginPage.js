@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // NOU: Adăugat useEffect
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -9,7 +9,19 @@ function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAuthenticated, userRole } = useAuth(); // NOU: Preluat isAuthenticated și userRole din context
+
+  // Acest useEffect va rula de fiecare dată când isAuthenticated sau userRole se schimbă.
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (userRole === 'admin' || userRole === 'trainer') {
+        navigate('/admin');
+      } else {
+        navigate('/client-dashboard');
+      }
+      toast.success('Autentificare reușită!'); // Mutat toast-ul aici pentru a fi consistent cu navigarea
+    }
+  }, [isAuthenticated, userRole, navigate]); // Dependențe pentru useEffect
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,18 +32,8 @@ function LoginPage() {
     }
 
     const result = await login(phoneNumber, password);
-    if (result.success) {
-      toast.success('Autentificare reușită!');
-      // NOU: Adăugăm o scurtă întârziere pentru a permite contextului de autentificare să se actualizeze complet
-      // și să forțeze re-randarea PrivateRoute înainte de navigare.
-      setTimeout(() => {
-        if (result.role === 'admin' || result.role === 'trainer') {
-          navigate('/admin');
-        } else {
-          navigate('/client-dashboard'); // MODIFICAT: Calea corectă pentru dashboard-ul clientului
-        }
-      }, 50); // 50ms întârziere
-    } else {
+    // NU MAI REDIRECȚIONĂM AICI! Redirecționarea este gestionată de useEffect de mai sus.
+    if (!result.success) {
       toast.error(result.error || 'Autentificare eșuată. Verifică credențialele.');
     }
   };

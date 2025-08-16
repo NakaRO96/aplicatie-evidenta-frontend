@@ -4,14 +4,24 @@ import { jwtDecode } from 'jwt-decode';
 
 const AuthContext = createContext(null);
 
-// Placeholder pentru URL-ul public al backend-ului
-// SCHIMBĂRI AICI: Am înlocuit "http://localhost:5000" cu adresa reală a backend-ului tău.
 const BACKEND_URL = "https://aplicatie-evidenta-backend.onrender.com";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
+  // NOU: Stare explicită pentru rolul utilizatorului
+  const [userRole, setUserRole] = useState(null); 
+  // NOU: Stare explicită pentru autentificare, derivată din prezența utilizatorului
+  const isAuthenticated = !!user; 
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+    setUser(null);
+    setUserRole(null); // Resetează rolul la deconectare
+    delete axios.defaults.headers.common['x-auth-token'];
+  };
 
   useEffect(() => {
     const initializeAuth = () => {
@@ -23,6 +33,8 @@ export const AuthProvider = ({ children }) => {
             logout();
           } else {
             setUser(decoded.user);
+            // NOU: Setează rolul utilizatorului la inițializare
+            setUserRole(decoded.user.role); 
             axios.defaults.headers.common['x-auth-token'] = token;
           }
         } catch (error) {
@@ -34,35 +46,30 @@ export const AuthProvider = ({ children }) => {
     };
 
     initializeAuth();
-  }, [token]);
+  }, [token]); // Dependența pe 'token' e corectă aici
 
   const login = async (phoneNumber, password) => {
     try {
-      // Folosește URL-ul backend-ului public
       const res = await axios.post(`${BACKEND_URL}/api/auth/login`, { phoneNumber, password });
-      const { token: newToken, role } = res.data;
+      const { token: newToken } = res.data; // Nu mai avem nevoie de 'role' separat aici, îl extragem din token
+      
       localStorage.setItem('token', newToken);
-      setToken(newToken);
+      setToken(newToken); // Acest setToken va declanșa useEffect-ul de mai sus
+      
       const decoded = jwtDecode(newToken);
       setUser(decoded.user);
+      setUserRole(decoded.user.role); // NOU: Setează rolul imediat după login
       axios.defaults.headers.common['x-auth-token'] = newToken;
 
-      return { success: true, role };
+      return { success: true, role: decoded.user.role }; // Returnează rolul pentru LoginPage
     } catch (err) {
       console.error('Eroare la autentificare:', err.response ? err.response.data.msg : err.message);
       return { success: false, error: err.response ? err.response.data.msg : 'Eroare la autentificare' };
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
-    setUser(null);
-    delete axios.defaults.headers.common['x-auth-token'];
-  };
-
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, logout, isAuthenticated, userRole }}>
       {children}
     </AuthContext.Provider>
   );

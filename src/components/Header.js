@@ -23,14 +23,10 @@ const Header = () => {
   return (
     <header className="bg-white shadow-md p-4 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
-        {/* Logo sau titlu - adaptează textul în funcție de rol și dacă e autentificat */}
-        <Link 
-          to={isAuthenticated ? (userRole === 'admin' || userRole === 'trainer' ? "/admin" : "/client-dashboard") : "/login"} 
-          onClick={handleLinkClick} 
-          className="text-2xl font-bold text-blue-700 hover:text-blue-900 transition-colors duration-200"
-        >
-          {isAuthenticated ? (userRole === 'admin' || userRole === 'trainer' ? "Panou Admin" : "Dashboard Client") : "Autentificare"}
-        </Link>
+        {/* NOU: Titlul "Evidenta" este acum un span, deci nu este interactiv */}
+        <span className="text-2xl font-bold text-blue-700">
+          Evidenta
+        </span>
 
         {/* Meniu pe ecrane mari */}
         <nav className="hidden md:flex items-center space-x-6">
