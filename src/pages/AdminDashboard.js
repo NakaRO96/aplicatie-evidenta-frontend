@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { FaUserPlus, FaInfoCircle, FaTrashAlt, FaTrophy, FaRunning } from 'react-icons/fa';
+// Am adăugat FaUserCheck pentru iconița noului buton
+import { FaUserPlus, FaInfoCircle, FaTrashAlt, FaTrophy, FaRunning, FaUserCheck } from 'react-icons/fa'; 
 
 function AdminDashboard() {
   const [users, setUsers] = useState([]);
@@ -131,6 +132,17 @@ function AdminDashboard() {
               <FaUserPlus />
               Creează Cont Nou
             </Link>
+            
+            {/* INCEPUTUL MODIFICARII: Adăugarea noului buton */}
+            <Link
+              to="/admin/attendance"
+              className="bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-purple-700 active:bg-purple-800 transition-all duration-300 shadow-md hover:shadow-lg text-center flex items-center justify-center gap-2"
+            >
+              <FaUserCheck />
+              Prezență Antrenament
+            </Link>
+            {/* SFARSITUL MODIFICARII */}
+            
             <button
               onClick={handleLogout}
               className="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 active:bg-red-800 transition-all duration-300 shadow-md hover:shadow-lg text-center"
