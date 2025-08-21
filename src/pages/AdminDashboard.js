@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
-import { FaUserPlus, FaInfoCircle, FaTrashAlt, FaTrophy, FaRunning, FaUserCheck } from 'react-icons/fa'; 
+import { FaUserPlus, FaInfoCircle, FaTrashAlt, FaTrophy, FaRunning, FaUserCheck } from 'react-icons/fa';
 
 function AdminDashboard() {
   const [users, setUsers] = useState([]);
@@ -14,7 +14,7 @@ function AdminDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
-  
+
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -31,7 +31,6 @@ function AdminDashboard() {
       setUsers(res.data.users);
       setTotalPages(res.data.totalPages);
       setCurrentPage(res.data.currentPage);
-      setIsLoading(false);
     } catch (err) {
       console.error('Eroare la preluarea utilizatorilor:', err.response ? err.response.data : err.message);
       if (err.response && err.response.status === 401) {
@@ -43,6 +42,8 @@ function AdminDashboard() {
       } else {
         toast.error('A apărut o eroare la preluarea utilizatorilor.');
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -59,22 +60,22 @@ function AdminDashboard() {
       console.error('Eroare la preluarea topului simulărilor:', err);
     }
   };
-  
+
   // Rulează o singură dată la montarea componentei
   useEffect(() => {
     const loadInitialData = async () => {
-      setIsLoading(true);
       await Promise.all([
         fetchUsers(1),
         fetchTopSimulations()
       ]);
-      setIsLoading(false);
+      // setIsLoading(false); // Am mutat setIsLoading în finally
     };
     loadInitialData();
   }, []);
 
   // Rulează de fiecare dată când se schimbă `filter` sau `searchQuery`
   useEffect(() => {
+    // Verificăm dacă nu este prima încărcare
     if (!isLoading) {
       fetchUsers(1);
     }
@@ -111,10 +112,21 @@ function AdminDashboard() {
     }
   };
 
-  const filteredUsers = users.filter(user =>
+  // VERIFICĂ DACĂ `users` EXISTĂ ÎNAINTE DE A FILTRA
+  const filteredUsers = users?.filter(user =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.phoneNumber.includes(searchQuery)
-  );
+  ) || [];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200">
+        <p className="text-xl font-semibold text-blue-800 animate-pulse">
+          Se încarcă...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200 p-4 sm:p-6 lg:p-8 font-sans antialiased">
@@ -131,7 +143,7 @@ function AdminDashboard() {
               <FaUserPlus />
               Creează Cont Nou
             </Link>
-            
+
             <Link
               to="/admin/attendance"
               className="bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-purple-700 active:bg-purple-800 transition-all duration-300 shadow-md hover:shadow-lg text-center flex items-center justify-center gap-2"
@@ -139,7 +151,7 @@ function AdminDashboard() {
               <FaUserCheck />
               Prezență Antrenament
             </Link>
-            
+
             <button
               onClick={handleLogout}
               className="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 active:bg-red-800 transition-all duration-300 shadow-md hover:shadow-lg text-center"
