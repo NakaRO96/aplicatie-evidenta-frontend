@@ -16,15 +16,23 @@ function AdminDashboard() {
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
 
+import { toast } from 'react-toastify';
+import { FaUserPlus, FaInfoCircle, FaTrashAlt } from 'react-icons/fa'; // NOU: Importă iconițele necesare
+
+function AdminDashboard() {
+  const [users, setUsers] = useState([]);
+  const [filter, setFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const { logout } = useAuth();
   const navigate = useNavigate();
 
   const BACKEND_URL = 'https://aplicatie-evidenta-backend.onrender.com';
 
   const fetchTopSimulations = async () => {
+  const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${BACKEND_URL}/api/simulations/top`, {
+      const res = await axios.get(`${BACKEND_URL}/api/users?filter=${filter}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -46,11 +54,17 @@ function AdminDashboard() {
       setUsers(res.data.users);
       setTotalPages(res.data.totalPages);
       setCurrentPage(res.data.currentPage);
+      setUsers(res.data);
     } catch (err) {
       console.error('Eroare la preluarea utilizatorilor:', err.response ? err.response.data : err.message);
       if (err.response && err.response.status === 401) {
         logout();
         navigate('/login');
+        toast.error('Sesiunea a expirat. Te rugăm să te autentifici din nou.');
+      } else if (err.response && err.response.status === 403) {
+        toast.error('Acces neautorizat la resursă.');
+      } else {
+        toast.error('A apărut o eroare la preluarea utilizatorilor.');
       }
     }
   };
@@ -76,6 +90,8 @@ function AdminDashboard() {
       fetchUsers(1);
     }
   }, [filter, searchQuery]);
+    fetchUsers();
+  }, 
 
   const handleLogout = () => {
     logout();
@@ -92,30 +108,27 @@ function AdminDashboard() {
           }
         });
         fetchUsers(currentPage);
+        toast.success(`Utilizatorul ${userName} a fost șters cu succes.`);
+        fetchUsers();
       } catch (err) {
         console.error('Eroare la ștergerea utilizatorului:', err);
         if (err.response && err.response.status === 401) {
           logout();
           navigate('/login');
+          toast.error('Sesiunea a expirat. Te rugăm să te autentifici din nou.');
+        } else if (err.response && err.response.status === 403) {
+          toast.error('Acces neautorizat. Nu ai permisiunea de a șterge utilizatori.');
+        } else {
+          toast.error('A apărut o eroare la ștergerea utilizatorului.');
         }
       }
     }
   };
 
-  const handlePageChange = (page) => {
-    if (page > 0 && page <= totalPages) {
-      fetchUsers(page);
-    }
-  };
-  
-  const formatSecondsToMMSS = (totalSeconds) => {
-    if (totalSeconds === null || totalSeconds === undefined) {
-      return '-';
-    }
-    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
-    const seconds = String(Math.floor(totalSeconds % 60)).padStart(2, '0');
-    return `${minutes}:${seconds}`;
-  };
+  const filteredUsers = users.filter(user =>
+    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.phoneNumber.includes(searchQuery)
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200 p-4 sm:p-6 lg:p-8 font-sans antialiased">
@@ -127,9 +140,9 @@ function AdminDashboard() {
           <div className="flex flex-col sm:flex-row gap-3">
             <Link
               to="/admin/create-account"
-              className="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 active:bg-green-800 transition-all duration-300 shadow-md hover:shadow-lg text-center flex items-center justify-center gap-2"
+              className="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 active:bg-green-800 transition-all duration-300 shadow-md hover:shadow-lg text-center flex items-center justify-center gap-2" // MODIFICAT: Adăugat `flex items-center gap-2`
             >
-              <FaUserPlus />
+              <FaUserPlus /> {/* NOU: Iconița pentru "Creează Cont Nou" */}
               Creează Cont Nou
             </Link>
             
@@ -152,135 +165,92 @@ function AdminDashboard() {
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center min-h-[50vh] bg-white shadow-xl rounded-2xl p-8 border border-blue-100">
-            <FaRunning className="text-blue-500 text-6xl mb-4 animate-bounce" />
-            <p className="text-2xl font-bold text-gray-700">Se încarcă datele...</p>
+        {/* Filtre și Căutare */}
+        <div className="bg-white shadow-lg rounded-xl p-6 mb-8 flex flex-col sm:flex-row items-center gap-4">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <label htmlFor="filter" className="text-gray-700 text-base font-semibold">Filtrează utilizatorii:</label>
+            <select
+              id="filter"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-3 focus:ring-blue-400 transition-all duration-200 bg-white shadow-sm"
+            >
+              <option value="all">Toți</option>
+              <option value="active">Activi</option>
+              <option value="expired">Expirați</option>
+            </select>
           </div>
-        ) : (
-          <>
-            {topSimulations.length > 0 && (
-              <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-blue-100">
-                <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-blue-700 flex items-center gap-3">
-                  <FaTrophy className="text-yellow-500" />
-                  Top 3 Cele Mai Bune Timpuri
-                </h2>
-                <ul className="list-none space-y-4">
-                  {topSimulations.map((result, index) => (
-                    <li key={result._id} className="flex items-center justify-between p-4 bg-blue-50 rounded-lg shadow-sm">
-                      <div className="flex items-center space-x-4">
-                        <span className="text-xl font-bold text-gray-800 w-8 text-center">
-                          #{index + 1}
-                        </span>
-                        <span className="text-lg font-medium text-blue-600">
-                          {result.userName}
-                        </span>
-                      </div>
-                      <span className="text-xl font-bold text-gray-900 font-mono">
-                        {formatSecondsToMMSS(result.totalTime)}
-                      </span>
-                    </li>
+          <input
+            type="text"
+            placeholder="Căută după nume sau telefon..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-3 focus:ring-blue-400 flex-grow w-full sm:w-auto transition-all duration-200 shadow-sm"
+          />
+        </div>
+
+        {/* Lista Utilizatorilor */}
+        <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 border border-blue-100">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-blue-700">Lista Utilizatorilor</h2>
+          {filteredUsers.length === 0 ? (
+            <p className="text-gray-600 text-lg text-center py-4">Nu există utilizatori înregistrați conform filtrului și căutării selectate.</p>
+          ) : (
+            <div className="overflow-x-auto relative shadow-md rounded-lg">
+              <table className="min-w-full bg-white text-left">
+                <thead className="bg-blue-50 border-b border-blue-200 hidden md:table-header-group">
+                  <tr>
+                    <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700">Nume</th>
+                    <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700">Număr Telefon</th>
+                    <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700">Abonament Expiră</th>
+                    <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700">Rol</th>
+                    <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700">Acțiuni</th>
+                  </tr>
+                </thead>
+                <tbody className="block md:table-row-group">
+                  {filteredUsers.map((user) => (
+                    <tr key={user._id} className="border-b border-gray-200 md:table-row md:hover:bg-blue-50 transition-colors duration-150 block md:p-4 md:rounded-xl md:shadow-md md:bg-white md:mb-0 mb-4 p-4 rounded-xl shadow-md bg-white">
+                      <td data-label="Nume" className="py-2 px-0 block md:table-cell md:py-3 md:px-6 font-semibold text-gray-700 md:text-gray-900">
+                        <span className="md:hidden text-gray-500 font-normal block">Nume:</span>
+                        {user.name}
+                      </td>
+                      <td data-label="Număr Telefon" className="py-2 px-0 block md:table-cell md:py-3 md:px-6">
+                        <span className="md:hidden text-gray-500 font-normal block">Număr Telefon:</span>
+                        {user.phoneNumber}
+                      </td>
+                      <td data-label="Abonament Expiră" className="py-2 px-0 block md:table-cell md:py-3 md:px-6">
+                        <span className="md:hidden text-gray-500 font-normal block">Abonament Expiră:</span>
+                        {user.subscriptionEndDate ? new Date(user.subscriptionEndDate).toLocaleDateString('ro-RO') : 'N/A'}
+                      </td>
+                      <td data-label="Rol" className="py-2 px-0 block md:table-cell md:py-3 md:px-6">
+                        <span className="md:hidden text-gray-500 font-normal block">Rol:</span>
+                        {user.role}
+                      </td>
+                      <td data-label="Acțiuni" className="py-2 px-0 flex flex-col sm:flex-row gap-2 md:table-cell md:py-3 md:px-6">
+                        <Link
+                          to={`/admin/users/${user._id}`}
+                          className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-blue-600 active:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md text-center flex items-center justify-center gap-1" // MODIFICAT: Adăugat `flex items-center gap-1`
+                        >
+                          <FaInfoCircle /> {/* NOU: Iconița pentru "Detalii" */}
+                          Detalii
+                        </Link>
+                        <button
+                          onClick={() => handleDeleteUser(user._id, user.name)}
+                          className="bg-red-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-red-600 active:bg-red-700 transition-all duration-200 shadow-sm hover:shadow-md text-center flex items-center justify-center gap-1" // MODIFICAT: Adăugat `flex items-center gap-1`
+                        >
+                          <FaTrashAlt /> {/* NOU: Iconița pentru "Șterge" */}
+                          Șterge
+                        </button>
+                      </td>
+                    </tr>
                   ))}
-                </ul>
-              </div>
-            )}
-
-            <div className="bg-white shadow-lg rounded-xl p-6 mb-8 flex flex-col sm:flex-row items-center gap-4">
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <label htmlFor="filter" className="text-gray-700 text-base font-semibold">Filtrează utilizatorii:</label>
-                <select
-                  id="filter"
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                  className="border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-3 focus:ring-blue-400 transition-all duration-200 bg-white shadow-sm"
-                >
-                  <option value="all">Toți</option>
-                  <option value="active">Activi</option>
-                  <option value="expired">Expirați</option>
-                </select>
-              </div>
-              <input
-                type="text"
-                placeholder="Căută după nume sau telefon..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-3 focus:ring-blue-400 flex-grow w-full sm:w-auto transition-all duration-200 shadow-sm"
-              />
+                </tbody>
+              </table>
             </div>
-
-            <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 border border-blue-100">
-              <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-blue-700">Lista Utilizatorilor</h2>
-              {users.length === 0 ? (
-                <p className="text-gray-600 text-lg text-center py-4">Nu există utilizatori înregistrați conform filtrului și căutării selectate.</p>
-              ) : (
-                <>
-                  <div className="overflow-x-auto relative shadow-md rounded-lg">
-                    <table className="min-w-full bg-white text-left table-auto">
-                      <thead className="bg-blue-50 border-b border-blue-200">
-                        <tr>
-                          <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700 whitespace-nowrap">Nume</th>
-                          <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700 whitespace-nowrap">Număr Telefon</th>
-                          <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700 whitespace-nowrap">Abonament Expiră</th>
-                          <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700 whitespace-nowrap">Rol</th>
-                          <th scope="col" className="py-3 px-4 sm:px-6 font-semibold text-gray-700 whitespace-nowrap">Acțiuni</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {users.map((user) => (
-                          <tr key={user._id} className="border-b border-gray-200 hover:bg-blue-50 transition-colors duration-150">
-                            <td className="py-4 px-4 sm:px-6 font-semibold text-gray-900 whitespace-nowrap">{user.name}</td>
-                            <td className="py-4 px-4 sm:px-6 whitespace-nowrap">{user.phoneNumber}</td>
-                            <td className="py-4 px-4 sm:px-6 whitespace-nowrap">{user.subscriptionEndDate ? new Date(user.subscriptionEndDate).toLocaleDateString('ro-RO') : 'N/A'}</td>
-                            <td className="py-4 px-4 sm:px-6 whitespace-nowrap">{user.role}</td>
-                            <td className="py-4 px-4 sm:px-6 flex flex-col sm:flex-row gap-2">
-                              <Link
-                                to={`/admin/users/${user._id}`}
-                                className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-blue-600 active:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md text-center flex items-center justify-center gap-1 w-full sm:w-auto"
-                              >
-                                <FaInfoCircle />
-                                Detalii
-                              </Link>
-                              <button
-                                onClick={() => handleDeleteUser(user._id, user.name)}
-                                className="bg-red-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-red-600 active:bg-red-700 transition-all duration-200 shadow-sm hover:shadow-md text-center flex items-center justify-center gap-1 w-full sm:w-auto"
-                              >
-                                <FaTrashAlt />
-                                Șterge
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="flex justify-center items-center mt-4 space-x-2">
-                    <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-400 transition-colors duration-200"
-                    >
-                      &laquo; Precedenta
-                    </button>
-                    <span className="text-lg font-semibold text-gray-800">
-                      Pagina {currentPage} din {totalPages}
-                    </span>
-                    <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-400 transition-colors duration-200"
-                    >
-                      Urmatoarea &raquo;
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-export default AdminDashboard;
+export default AdminDashboard; 
