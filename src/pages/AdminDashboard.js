@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-// Am adăugat FaUserCheck pentru iconița noului buton
+import { toast } from 'react-toastify';
 import { FaUserPlus, FaInfoCircle, FaTrashAlt, FaTrophy, FaRunning, FaUserCheck } from 'react-icons/fa'; 
 
 function AdminDashboard() {
@@ -11,37 +11,14 @@ function AdminDashboard() {
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
-
-import { toast } from 'react-toastify';
-import { FaUserPlus, FaInfoCircle, FaTrashAlt } from 'react-icons/fa'; // NOU: Importă iconițele necesare
-
-function AdminDashboard() {
-  const [users, setUsers] = useState([]);
-  const [filter, setFilter] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  
   const { logout } = useAuth();
   const navigate = useNavigate();
 
   const BACKEND_URL = 'https://aplicatie-evidenta-backend.onrender.com';
-
-  const fetchTopSimulations = async () => {
-  const fetchUsers = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get(`${BACKEND_URL}/api/users?filter=${filter}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      setTopSimulations(res.data);
-    } catch (err) {
-      console.error('Eroare la preluarea topului simulărilor:', err);
-    }
-  };
 
   const fetchUsers = async (page = 1) => {
     try {
@@ -54,7 +31,7 @@ function AdminDashboard() {
       setUsers(res.data.users);
       setTotalPages(res.data.totalPages);
       setCurrentPage(res.data.currentPage);
-      setUsers(res.data);
+      setIsLoading(false);
     } catch (err) {
       console.error('Eroare la preluarea utilizatorilor:', err.response ? err.response.data : err.message);
       if (err.response && err.response.status === 401) {
@@ -69,7 +46,21 @@ function AdminDashboard() {
     }
   };
 
-  // NOU: Acest useEffect se va rula o singură dată la montarea componentei
+  const fetchTopSimulations = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${BACKEND_URL}/api/users?filter=${filter}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setTopSimulations(res.data);
+    } catch (err) {
+      console.error('Eroare la preluarea topului simulărilor:', err);
+    }
+  };
+  
+  // Rulează o singură dată la montarea componentei
   useEffect(() => {
     const loadInitialData = async () => {
       setIsLoading(true);
@@ -82,16 +73,12 @@ function AdminDashboard() {
     loadInitialData();
   }, []);
 
-  // NOU: Acest useEffect se va rula de fiecare dată când se schimbă `filter` sau `searchQuery`
-  // Nu modifică starea `isLoading`, astfel că ecranul de încărcare nu va mai apărea
+  // Rulează de fiecare dată când se schimbă `filter` sau `searchQuery`
   useEffect(() => {
-    // Verificăm dacă nu este prima încărcare (când `isLoading` era true)
     if (!isLoading) {
       fetchUsers(1);
     }
   }, [filter, searchQuery]);
-    fetchUsers();
-  }, 
 
   const handleLogout = () => {
     logout();
@@ -109,7 +96,6 @@ function AdminDashboard() {
         });
         fetchUsers(currentPage);
         toast.success(`Utilizatorul ${userName} a fost șters cu succes.`);
-        fetchUsers();
       } catch (err) {
         console.error('Eroare la ștergerea utilizatorului:', err);
         if (err.response && err.response.status === 401) {
@@ -140,13 +126,12 @@ function AdminDashboard() {
           <div className="flex flex-col sm:flex-row gap-3">
             <Link
               to="/admin/create-account"
-              className="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 active:bg-green-800 transition-all duration-300 shadow-md hover:shadow-lg text-center flex items-center justify-center gap-2" // MODIFICAT: Adăugat `flex items-center gap-2`
+              className="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 active:bg-green-800 transition-all duration-300 shadow-md hover:shadow-lg text-center flex items-center justify-center gap-2"
             >
-              <FaUserPlus /> {/* NOU: Iconița pentru "Creează Cont Nou" */}
+              <FaUserPlus />
               Creează Cont Nou
             </Link>
             
-            {/* INCEPUTUL MODIFICARII: Adăugarea noului buton */}
             <Link
               to="/admin/attendance"
               className="bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-purple-700 active:bg-purple-800 transition-all duration-300 shadow-md hover:shadow-lg text-center flex items-center justify-center gap-2"
@@ -154,7 +139,6 @@ function AdminDashboard() {
               <FaUserCheck />
               Prezență Antrenament
             </Link>
-            {/* SFARSITUL MODIFICARII */}
             
             <button
               onClick={handleLogout}
@@ -165,7 +149,6 @@ function AdminDashboard() {
           </div>
         </div>
 
-        {/* Filtre și Căutare */}
         <div className="bg-white shadow-lg rounded-xl p-6 mb-8 flex flex-col sm:flex-row items-center gap-4">
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <label htmlFor="filter" className="text-gray-700 text-base font-semibold">Filtrează utilizatorii:</label>
@@ -189,7 +172,6 @@ function AdminDashboard() {
           />
         </div>
 
-        {/* Lista Utilizatorilor */}
         <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 border border-blue-100">
           <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-blue-700">Lista Utilizatorilor</h2>
           {filteredUsers.length === 0 ? (
@@ -228,16 +210,16 @@ function AdminDashboard() {
                       <td data-label="Acțiuni" className="py-2 px-0 flex flex-col sm:flex-row gap-2 md:table-cell md:py-3 md:px-6">
                         <Link
                           to={`/admin/users/${user._id}`}
-                          className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-blue-600 active:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md text-center flex items-center justify-center gap-1" // MODIFICAT: Adăugat `flex items-center gap-1`
+                          className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-blue-600 active:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md text-center flex items-center justify-center gap-1"
                         >
-                          <FaInfoCircle /> {/* NOU: Iconița pentru "Detalii" */}
+                          <FaInfoCircle />
                           Detalii
                         </Link>
                         <button
                           onClick={() => handleDeleteUser(user._id, user.name)}
-                          className="bg-red-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-red-600 active:bg-red-700 transition-all duration-200 shadow-sm hover:shadow-md text-center flex items-center justify-center gap-1" // MODIFICAT: Adăugat `flex items-center gap-1`
+                          className="bg-red-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-red-600 active:bg-red-700 transition-all duration-200 shadow-sm hover:shadow-md text-center flex items-center justify-center gap-1"
                         >
-                          <FaTrashAlt /> {/* NOU: Iconița pentru "Șterge" */}
+                          <FaTrashAlt />
                           Șterge
                         </button>
                       </td>
@@ -253,4 +235,4 @@ function AdminDashboard() {
   );
 }
 
-export default AdminDashboard; 
+export default AdminDashboard;
