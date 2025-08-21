@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-// import { toast } from 'react-toastify'; // Notificările Toast nu mai sunt folosite
+import { toast } from 'react-toastify';
 
 const obstacole = [
   "Săritura lungime", "Pas sărit", "Rostogoliri", "Bancă greutăți",
@@ -11,6 +11,7 @@ const obstacole = [
 const penaltySeconds = 3;
 const BACKEND_URL = 'https://aplicatie-evidenta-backend.onrender.com';
 
+// Funcție actualizată pentru a formata timpul cu zecimale
 function formatTime(totalSeconds) {
   if (totalSeconds === null || totalSeconds === undefined || isNaN(totalSeconds)) {
     return '-';
@@ -54,11 +55,11 @@ function CourseTimer({ userId, onSimulationSaved }) {
 
   const startTimer = () => {
     if (!userId) {
-      // toast.error("Eroare: Niciun utilizator selectat pentru simulare. Reîncarcă pagina sau selectează un utilizator.");
+      toast.error("Eroare: Niciun utilizator selectat pentru simulare. Reîncarcă pagina sau selectează un utilizator.");
       return;
     }
     if (timerRunning) {
-      // toast.warn("Cronometrul este deja pornit.");
+      toast.warn("Cronometrul este deja pornit.");
       return;
     }
     penaltiesRef.current = [];
@@ -80,22 +81,22 @@ function CourseTimer({ userId, onSimulationSaved }) {
 
   const startJavelinTimer = () => {
     if (!timerRunning) {
-      // toast.error("Te rog să pornești cronometrul principal înainte de a măsura timpul jaloanelor.");
+      toast.error("Te rog să pornești cronometrul principal înainte de a măsura timpul jaloanelor.");
       return;
     }
     if (javelinTimerActive) {
-      // toast.warn("Cronometrul pentru jaloane este deja pornit.");
+      toast.warn("Cronometrul pentru jaloane este deja pornit.");
       return;
     }
     javelinStartTimeRef.current = Date.now();
     setJavelinTimerActive(true);
     setJavelinTimeDisplay('Timp Jaloane: în curs...');
-    // toast.info("Cronometrul pentru jaloane a pornit!");
+    toast.info("Cronometrul pentru jaloane a pornit!");
   };
 
   const stopTimer = async () => {
     if (!timerRunning) {
-      // toast.error("Cronometrul nu este pornit.");
+      toast.error("Cronometrul nu este pornit.");
       return;
     }
     clearInterval(intervalRef.current);
@@ -135,14 +136,14 @@ function CourseTimer({ userId, onSimulationSaved }) {
           Authorization: `Bearer ${token}`
         }
       });
-      // toast.success('Rezultatul simulării a fost salvat cu succes în contul utilizatorului!');
+      toast.success('Rezultatul simulării a fost salvat cu succes în contul utilizatorului!');
       if (onSimulationSaved) {
         onSimulationSaved();
       }
       resetAll();
     } catch (error) {
       console.error('Eroare la salvarea rezultatului simulării:', error.response ? error.response.data : error.message);
-      // toast.error('A apărut o eroare la salvarea rezultatului simulării. Verifică consola pentru detalii.');
+      toast.error('A apărut o eroare la salvarea rezultatului simulării. Verifică consola pentru detalii.');
     }
   };
 
@@ -160,11 +161,11 @@ function CourseTimer({ userId, onSimulationSaved }) {
 
   const addPenalty = (obstacle) => {
     if (!timerRunning) {
-      // toast.error("Te rog să pornești cronometrul înainte de a adăuga penalizări.");
+      toast.error("Te rog să pornești cronometrul înainte de a adăuga penalizări.");
       return;
     }
     penaltiesRef.current = [...penaltiesRef.current, obstacle];
-    // toast.warn(`Penalizare adăugată pentru: ${obstacle}`);
+    toast.warn(`Penalizare adăugată pentru: ${obstacle}`);
     const newPenaltyCount = penaltiesRef.current.length;
     const totalPenaltySeconds = newPenaltyCount * penaltySeconds;
     
@@ -185,11 +186,11 @@ function CourseTimer({ userId, onSimulationSaved }) {
 
   const addEliminated = (obstacle) => {
     if (!timerRunning) {
-      // toast.error("Te rog să pornești cronometrul înainte de a marca obstacole eliminate.");
+      toast.error("Te rog să pornești cronometrul înainte de a marca obstacole eliminate.");
       return;
     }
     eliminatedObstaclesRef.current = [...eliminatedObstaclesRef.current, obstacle];
-    // toast.error(`Obstacol marcat ca eliminat: ${obstacle}`);
+    toast.error(`Obstacol marcat ca eliminat: ${obstacle}`);
     updateDisplay(
       finalTimeDisplay.split(': ')[1],
       penaltyTimeDisplay.split(': ')[1],
@@ -206,7 +207,7 @@ function CourseTimer({ userId, onSimulationSaved }) {
   }, []);
 
   return (
-    <div className="bg-gradient-to-br from-blue-100 to-indigo-200 min-h-screen p-4 sm:p-6 font-sans antialiased flex flex-col">
+    <div className="bg-gradient-to-br from-blue-100 to-indigo-200 min-h-screen p-4 sm:p-6 font-sans antialiased flex items-center justify-center">
       <div className="w-full max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-6 sm:p-8 space-y-6 transform transition-all duration-300 hover:shadow-2xl">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-center text-blue-800 tracking-tight mb-6">
           Monitorizare Timp Traseu Aplicativ
@@ -254,7 +255,7 @@ function CourseTimer({ userId, onSimulationSaved }) {
           <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 text-center">
             Acțiuni Obstacole
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {obstacole.map((obstacle, index) => (
               <div key={index} className="flex flex-col gap-2 p-4 border border-gray-200 rounded-lg shadow-sm bg-white hover:shadow-md transition-shadow duration-200">
                 <p className="text-base font-medium text-gray-800 text-center mb-2">{obstacle}</p>
