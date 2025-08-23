@@ -1,24 +1,26 @@
+// src/components/PrivateRoute.js
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const PrivateRoute = ({ requiredRole }) => {
+const PrivateRoute = ({ allowedRoles = null }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-gray-100 text-lg">Se încarcă...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 text-lg">
+        Se încarcă...
+      </div>
+    );
   }
 
-  // Dacă nu e autentificat, redirecționează la pagina de login
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Dacă este autentificat, dar nu are rolul necesar, redirecționează la login
-  // Sau, alternativ, la o pagină de eroare "Acces Nepermis"
-  if (requiredRole && user.role !== requiredRole) {
-    // Poți naviga și la o pagină de "acces refuzat"
-    return <Navigate to="/login" replace />;
+  // Dacă sunt specificate roluri permise, verificăm dacă rolul utilizatorului este inclus
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/access-denied" replace />; // Redirecționare la AccessDenied
   }
 
   // Dacă totul este în regulă, afișează conținutul rutei imbricate

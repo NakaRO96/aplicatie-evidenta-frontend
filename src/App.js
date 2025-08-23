@@ -1,88 +1,74 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css'; 
+import 'react-toastify/dist/ReactToastify.css';
 
+// Componentele tale
 import LoginPage from './pages/LoginPage';
+import ForgotPassword from './pages/ForgotPassword'; // NOU: Importat
+import ResetPassword from './pages/ResetPassword';   // NOU: Importat
 import AdminDashboard from './pages/AdminDashboard';
 import CreateAccountPage from './pages/CreateAccountPage';
 import UserDetailsPage from './pages/UserDetailsPage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
-import NotFoundPage from './pages/NotFoundPage';
-import ClientDashboard from './pages/ClientDashboard.js'; // Asigură-te că fișierul este numit ClientDashboard.js
+import NotFoundPage from './pages/NotFoundPage';       // Presupunem că ai acest fișier
+import ClientDashboard from './pages/ClientDashboard';
+import AttendanceDashboard from './components/AttendanceDashboard'; // NOU: Importat
+import AccessDenied from './pages/AccessDenied'; // NOU: Importat
 
-import { AuthProvider, useAuth } from './context/AuthContext';
+// Contextul de autentificare și Header
+import { AuthProvider } from './context/AuthContext';
 import Header from './components/Header';
-
-const PrivateRoute = ({ children, allowedRoles }) => {
-  const { isAuthenticated, userRole } = useAuth();
-  if (!isAuthenticated) {
-    return <Navigate to="/login" />;
-  }
-  if (allowedRoles && !allowedRoles.includes(userRole)) {
-    return <Navigate to="/login" />; 
-  }
-  return children;
-};
+import PrivateRoute from './components/PrivateRoute'; // NOU: Importat PrivateRoute-ul extern
 
 function App() {
   return (
     <Router>
       <AuthProvider>
         <Header />
-        
         <Routes>
+          {/* Rute publice */}
           <Route path="/" element={<Navigate to="/login" />} />
           <Route path="/login" element={<LoginPage />} />
-          
-          <Route
-            path="/admin"
-            element={
-              <PrivateRoute allowedRoles={['admin', 'trainer']}>
-                <AdminDashboard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin/create-account"
-            element={
-              <PrivateRoute allowedRoles={['admin', 'trainer']}>
-                <CreateAccountPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-                path="/admin/users/:id"
-                element={
-                  <PrivateRoute allowedRoles={['admin', 'trainer']}>
-                    <UserDetailsPage />
-                  </PrivateRoute>
-                }
-              />
-              {/* MODIFICAT: Permite accesul și pentru rolul 'client' la schimbarea parolei */}
-              <Route
-                path="/admin/change-password"
-                element={
-                  <PrivateRoute allowedRoles={['admin', 'trainer', 'client']}>
-                    <ChangePasswordPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/client-dashboard"
-                element={
-                  <PrivateRoute allowedRoles={['client']}>
-                    <ClientDashboard />
-                  </PrivateRoute>
-                }
-              />
-              
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-            <ToastContainer position="bottom-right" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-          </AuthProvider>
-        </Router>
-      );
-    }
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/access-denied" element={<AccessDenied />} /> {/* Pagina de acces refuzat */}
 
-    export default App;
+          {/* Rute private pentru Administratori */}
+          <Route element={<PrivateRoute allowedRoles={['admin']} />}>
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/create-account" element={<CreateAccountPage />} />
+            <Route path="/admin/users/:id" element={<UserDetailsPage />} />
+            <Route path="/admin/attendance" element={<AttendanceDashboard />} /> {/* Rută pentru Prezență Antrenament */}
+          </Route>
+
+          {/* Rută privată pentru schimbarea parolei (Admin & Client) */}
+          <Route element={<PrivateRoute allowedRoles={['admin', 'client']} />}>
+            <Route path="/admin/change-password" element={<ChangePasswordPage />} />
+          </Route>
+
+          {/* Rută privată pentru Client Dashboard */}
+          <Route element={<PrivateRoute allowedRoles={['client']} />}>
+            <Route path="/client-dashboard" element={<ClientDashboard />} />
+          </Route>
+
+          {/* Ruta pentru paginile inexistente (404) */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+        <ToastContainer
+          position="bottom-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
+      </AuthProvider>
+    </Router>
+  );
+}
+
+export default App;

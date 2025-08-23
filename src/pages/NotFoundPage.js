@@ -17,10 +17,10 @@ function NotFoundPage() {
           Ne pare rău, dar pagina pe care o cauți nu există sau a fost mutată.
         </p>
         <Link 
-          to="/admin" 
+          to="/login" // Redirecționează direct la pagina de login pentru simplitate
           className="bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 hover:bg-blue-700 active:bg-blue-800 shadow-md hover:shadow-lg"
         >
-          Înapoi la Panoul de Administrare
+          Înapoi la pagina de autentificare
         </Link>
       </div>
     </div>

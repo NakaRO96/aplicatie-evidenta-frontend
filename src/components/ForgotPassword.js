@@ -16,7 +16,6 @@ function ForgotPassword() {
     setMessage('');
 
     try {
-      // Această rută API trebuie să fie implementată în backend
       const res = await axios.post(`${BACKEND_URL}/api/auth/forgot-password`, { phoneNumber });
       setMessage(res.data.message);
       // Redirecționăm utilizatorul după un scurt delay, dacă totul a mers bine

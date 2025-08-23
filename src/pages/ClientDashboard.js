@@ -21,13 +21,9 @@ function ClientDashboard() {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get(`${BACKEND_URL}/api/users/${authUser.id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
+      // Apelăm direct, fără a mai seta manual token-ul. AuthContext face deja asta.
+      const res = await axios.get(`${BACKEND_URL}/api/users/${authUser.id}`);
+      
       console.log('Date utilizator primite:', res.data);
       
       setUser(res.data.user);
@@ -48,10 +44,7 @@ function ClientDashboard() {
     fetchClientData();
   }, [authUser]);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  // Am eliminat handleLogout, deoarece logout din useAuth face deja totul.
 
   if (!user) {
     return (
@@ -61,7 +54,6 @@ function ClientDashboard() {
     );
   }
 
-  // Helper function to format time in MM:SS
   const formatSecondsToMMSS = (totalSeconds) => {
     if (totalSeconds === null || totalSeconds === undefined) {
       return '-';
@@ -71,7 +63,6 @@ function ClientDashboard() {
     return `${minutes}:${seconds}`;
   };
 
-  // Prepare data for the chart
   const chartData = simulationResults
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .map(result => ({
@@ -84,7 +75,7 @@ function ClientDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200 p-4 sm:p-6 lg:p-8 font-sans antialiased">
       <div className="max-w-7xl mx-auto relative">
         <button
-          onClick={handleLogout}
+          onClick={logout}
           className="absolute top-4 right-4 bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-red-700 active:bg-red-800 transition-all duration-300 shadow-md hover:shadow-lg z-10 flex items-center gap-2"
         >
           <FaSignOutAlt />

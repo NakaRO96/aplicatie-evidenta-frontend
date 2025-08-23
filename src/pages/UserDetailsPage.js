@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import CourseTimer from '../components/CourseTimer';
 import { toast } from 'react-toastify';
-import { FaRunning } from 'react-icons/fa';
+import { FaRunning, FaArrowLeft } from 'react-icons/fa'; // NOU: Adăugat FaArrowLeft
 
 function UserDetailsPage() {
   const { id } = useParams();
@@ -16,7 +16,7 @@ function UserDetailsPage() {
   const [attendanceDate, setAttendanceDate] = useState('');
   const [attendanceError, setAttendanceError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [loadingMessage, setLoadingMessage] = useState("Se încarcă detaliile utilizatorului..."); // NOU: Mesaj dinamic
+  const [loadingMessage, setLoadingMessage] = useState("Se încarcă detaliile utilizatorului...");
   
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -25,12 +25,8 @@ function UserDetailsPage() {
 
   const fetchUserDetails = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get(`${BACKEND_URL}/api/users/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      // Am eliminat header-ul manual.
+      const res = await axios.get(`${BACKEND_URL}/api/users/${id}`);
       setUser(res.data.user);
       setSimulationResults(res.data.simulationResults);
       setEditedUser(res.data.user);
@@ -54,17 +50,15 @@ function UserDetailsPage() {
     setIsLoading(true);
     setLoadingMessage("Se încarcă detaliile utilizatorului...");
 
-    // Timeout de 15 secunde pentru a preveni blocarea
     const timeoutId = setTimeout(() => {
       if (isLoading) {
         setIsLoading(false);
-        setLoadingMessage("Eroare de rețea. Te rugăm să reîmprospătezi pagina.");
+        setLoadingMessage("Eroare de rețea. Te rugăm să reîmprospătești pagina.");
       }
     }, 15000);
 
     fetchUserDetails();
 
-    // Curățăm timeout-ul dacă componenta se demontează sau dacă se încarcă datele
     return () => clearTimeout(timeoutId);
   }, [id, showTimer]);
 
@@ -75,15 +69,11 @@ function UserDetailsPage() {
     }
 
     try {
-      const token = localStorage.getItem('token');
+      // Am eliminat header-ul manual.
       await axios.put(`${BACKEND_URL}/api/users/${id}`, {
         name: editedUser.name,
         phoneNumber: editedUser.phoneNumber,
         subscriptionEndDate: editedUser.subscriptionEndDate,
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
       });
       toast.success('Detalii utilizator actualizate cu succes!');
       setEditMode(false);
@@ -118,12 +108,8 @@ function UserDetailsPage() {
     const updatedAttendance = user.attendance ? [...user.attendance, newAttendanceEntry] : [newAttendanceEntry];
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.put(`${BACKEND_URL}/api/users/${id}`, { attendance: updatedAttendance }, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      // Am eliminat header-ul manual.
+      await axios.put(`${BACKEND_URL}/api/users/${id}`, { attendance: updatedAttendance });
       toast.success('Prezență adăugată cu succes!');
       setAttendanceDate('');
       fetchUserDetails();
@@ -142,12 +128,8 @@ function UserDetailsPage() {
   const handleDeleteSimulation = async (simId) => {
     if (window.confirm('Ești sigur că vrei să ștergi acest rezultat al simulării? Această acțiune este ireversibilă.')) {
       try {
-        const token = localStorage.getItem('token');
-        await axios.delete(`${BACKEND_URL}/api/simulations/${simId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        // Am eliminat header-ul manual.
+        await axios.delete(`${BACKEND_URL}/api/simulations/${simId}`);
         toast.success('Rezultat șters cu succes!');
         fetchUserDetails();
       } catch (err) {
@@ -174,7 +156,6 @@ function UserDetailsPage() {
     );
   }
 
-  // NOU: Randare full-screen a cronometrului
   if (showTimer) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200 p-4 sm:p-6 lg:p-8 font-sans antialiased flex items-center justify-center">
@@ -195,7 +176,7 @@ function UserDetailsPage() {
       return '-';
     }
     const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
-    const seconds = String(totalSeconds % 60).padStart(2, '0');
+    const seconds = String(Math.floor(totalSeconds % 60)).padStart(2, '0'); // Am adăugat Math.floor aici
     return `${minutes}:${seconds}`;
   };
 
@@ -206,15 +187,8 @@ function UserDetailsPage() {
           to="/admin"
           className="inline-flex items-center text-blue-700 hover:text-blue-900 font-semibold mb-6 transition-colors duration-200 text-lg group"
         >
-          <svg
-            className="w-5 h-5 mr-2 transform group-hover:-translate-x-1 transition-transform duration-200"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-          </svg>
+          {/* Am înlocuit SVG-ul cu o iconiță FaArrowLeft */}
+          <FaArrowLeft className="w-5 h-5 mr-2 transform group-hover:-translate-x-1 transition-transform duration-200" />
           Înapoi la Panoul Administrator
         </Link>
 
@@ -222,7 +196,6 @@ function UserDetailsPage() {
           Detalii Utilizator: <span className="text-indigo-600">{user.name}</span>
         </h1>
 
-        {/* Secțiunea Detalii și Editare */}
         <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-blue-100">
           <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-blue-700">Informații Utilizator</h2>
           {editMode ? (
@@ -288,7 +261,6 @@ function UserDetailsPage() {
           )}
         </div>
 
-        {/* Secțiunea Prezență */}
         <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-purple-100">
           <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-purple-700">Prezență la Antrenamente</h2>
           <div className="mb-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
@@ -330,7 +302,6 @@ function UserDetailsPage() {
           )}
         </div>
 
-        {/* Secțiunea Adaugă Simulare */}
         <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-emerald-100 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-emerald-700">Adaugă Simulare Traseu Aplicativ</h2>
           {!showTimer ? (
@@ -343,7 +314,6 @@ function UserDetailsPage() {
           ) : null}
         </div>
 
-        {/* Secțiunea Rezultate Simulări */}
         <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 mb-8 border border-teal-100">
           <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-teal-700">Rezultate Simulări</h2>
           {simulationResults.length > 0 ? (
@@ -368,7 +338,7 @@ function UserDetailsPage() {
                       <td className="py-3 px-4 sm:px-6 font-mono">{formatSecondsToMMSS(result.rawTime)}</td>
                       <td className="py-3 px-4 sm:px-6">{result.penaltyTime}s</td>
                       <td className="py-3 px-4 sm:px-6 font-mono font-bold text-teal-700">{formatSecondsToMMSS(result.totalTime)}</td>
-                      <td className="py-3 px-4 sm:px-6 font-mono">{formatSecondsToMMSS(result.javelinTime)}</td>
+                      <td className="py-3 px-4 sm:px-6 font-mono">{result.javelinTime ? formatSecondsToMMSS(result.javelinTime) : '-'}</td>
                       <td className="py-3 px-4 sm:px-6 text-gray-600">
                         {result.penaltiesList?.length > 0 ? result.penaltiesList.join(', ') : '-'}
                       </td>

@@ -3,16 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
-import { FaUser, FaPhone, FaLock, FaUserPlus, FaArrowLeft, FaEye, FaEyeSlash } from 'react-icons/fa'; // NOU: FaEye, FaEyeSlash
+import { FaUser, FaPhone, FaLock, FaUserPlus, FaArrowLeft, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 function CreateAccountPage() {
   const [name, setName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('client');
-  const [showPassword, setShowPassword] = useState(false); // NOU: Stare pentru vizibilitatea parolei
-  // Eliminat: const [message, setMessage] = useState('');
-  // Eliminat: const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { logout } = useAuth();
   
@@ -20,8 +18,6 @@ function CreateAccountPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Eliminat: setMessage('');
-    // Eliminat: setError('');
 
     if (!name || !phoneNumber || !password) {
       toast.error('Te rog să completezi toate câmpurile.');
@@ -29,16 +25,13 @@ function CreateAccountPage() {
     }
 
     try {
-      const token = localStorage.getItem('token');
+      // Am eliminat localStorage.getItem('token') și setarea manuală a headerului
+      // AuthContext configurează deja axios global pentru a trimite token-ul.
       const res = await axios.post(`${BACKEND_URL}/api/users`, {
         name,
         phoneNumber,
         password,
         role
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
       });
       toast.success(res.data.msg || 'Contul a fost creat cu succes!');
       setName('');
@@ -92,7 +85,7 @@ function CreateAccountPage() {
                 <FaPhone />
               </span>
               <input
-                type="tel" // MODIFICAT: Tip "tel" pentru tastatura numerică pe mobil
+                type="tel"
                 id="phoneNumber"
                 className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-3 focus:ring-blue-400 transition-all duration-200 shadow-sm"
                 value={phoneNumber}
@@ -110,7 +103,7 @@ function CreateAccountPage() {
                 <FaLock />
               </span>
               <input
-                type={showPassword ? 'text' : 'password'} // NOU: Tip dinamic pentru vizibilitatea parolei
+                type={showPassword ? 'text' : 'password'}
                 id="password"
                 className="w-full px-4 py-2 pl-10 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-3 focus:ring-blue-400 transition-all duration-200 shadow-sm"
                 value={password}
@@ -119,8 +112,8 @@ function CreateAccountPage() {
               />
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)} // NOU: Toggle vizibilitate
-                className="absolute inset-y-0 right-0 top-0 pr-3 flex items-center text-gray-400 hover:text-blue-500 transition-colors duration-200 focus:outline-none h-full" // Ajustat h-full
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 top-0 pr-3 flex items-center text-gray-400 hover:text-blue-500 transition-colors duration-200 focus:outline-none h-full"
               >
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </button>

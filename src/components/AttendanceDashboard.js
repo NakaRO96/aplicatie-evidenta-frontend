@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FaUserCheck } from 'react-icons/fa';
-import { toast } from 'react-toastify'; // Folosim toast pentru notificări
+import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext'; // Preluăm contextul de autentificare
+import { useAuth } from '../context/AuthContext';
 
 function AttendanceDashboard() {
     const [candidates, setCandidates] = useState([]);
@@ -15,7 +15,6 @@ function AttendanceDashboard() {
     const { logout } = useAuth();
     const navigate = useNavigate();
 
-    // Folosim URL-ul de backend din codul tău
     const BACKEND_URL = 'https://aplicatie-evidenta-backend.onrender.com';
 
     // Funcția pentru a prelua toți candidații
@@ -28,9 +27,8 @@ function AttendanceDashboard() {
                     Authorization: `Bearer ${token}`
                 }
             });
-            // Filtrăm doar candidații care sunt utilizatori normali, dacă e cazul
-            const filteredUsers = res.data.users.filter(user => user.role !== 'admin');
-            setCandidates(filteredUsers);
+            // NOTĂ: Am eliminat filtrarea pe frontend. Backend-ul deja o face.
+            setCandidates(res.data.users);
         } catch (err) {
             console.error('Eroare la preluarea candidaților:', err);
             if (err.response && err.response.status === 401) {
@@ -53,10 +51,11 @@ function AttendanceDashboard() {
                 const response = await axios.post(`${BACKEND_URL}/api/attendance/add`,
                     {
                         userId: candidateId,
-                        date: new Date().toISOString().split('T')[0] // Data de azi
+                        date: new Date().toISOString().split('T')[0]
                     },
                     {
                         headers: {
+                            // CORECȚIE: Adăugăm "Bearer " aici
                             Authorization: `Bearer ${token}`
                         }
                     }

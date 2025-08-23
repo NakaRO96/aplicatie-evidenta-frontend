@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; // NOU: Adăugat useEffect
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -9,19 +9,19 @@ function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const { login, isAuthenticated, userRole } = useAuth(); // NOU: Preluat isAuthenticated și userRole din context
+  const { login, isAuthenticated, userRole } = useAuth();
 
-  // Acest useEffect va rula de fiecare dată când isAuthenticated sau userRole se schimbă.
   useEffect(() => {
     if (isAuthenticated) {
-      if (userRole === 'admin' || userRole === 'trainer') {
+      // Am eliminat verificarea pentru 'trainer' deoarece nu este un rol definit în backend
+      if (userRole === 'admin') {
         navigate('/admin');
-      } else {
+      } else { // Dacă nu e admin, este client
         navigate('/client-dashboard');
       }
-      toast.success('Autentificare reușită!'); // Mutat toast-ul aici pentru a fi consistent cu navigarea
+      toast.success('Autentificare reușită!');
     }
-  }, [isAuthenticated, userRole, navigate]); // Dependențe pentru useEffect
+  }, [isAuthenticated, userRole, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,7 +32,6 @@ function LoginPage() {
     }
 
     const result = await login(phoneNumber, password);
-    // NU MAI REDIRECȚIONĂM AICI! Redirecționarea este gestionată de useEffect de mai sus.
     if (!result.success) {
       toast.error(result.error || 'Autentificare eșuată. Verifică credențialele.');
     }
