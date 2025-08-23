@@ -1,5 +1,3 @@
-// src/components/AttendanceDashboard.js
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FaUserCheck } from 'react-icons/fa';
@@ -48,14 +46,13 @@ function AttendanceDashboard() {
         if (window.confirm(`Ești sigur că vrei să adaugi prezența pentru ${candidateName} pentru ziua de azi?`)) {
             try {
                 const token = localStorage.getItem('token');
-                const response = await axios.post(`${BACKEND_URL}/api/attendance/add`,
+                const response = await axios.post(
+                    `${BACKEND_URL}/api/users/${candidateId}/attendance`, // RUTA CORECTĂ
                     {
-                        userId: candidateId,
-                        date: new Date().toISOString().split('T')[0]
+                        date: new Date().toISOString().split('T')[0] // Trimiți doar data
                     },
                     {
                         headers: {
-                            // CORECȚIE: Adăugăm "Bearer " aici
                             Authorization: `Bearer ${token}`
                         }
                     }

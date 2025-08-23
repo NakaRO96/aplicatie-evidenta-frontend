@@ -15,7 +15,7 @@ import NotFoundPage from './pages/NotFoundPage';
 import ClientDashboard from './pages/ClientDashboard';
 import AttendanceDashboard from './components/AttendanceDashboard';
 import AccessDenied from './pages/AccessDenied';
-import SimulationsPage from './pages/SimulationsPage'; // NOU: Importat
+import SimulationsPage from './pages/SimulationsPage';
 
 // Contextul de autentificare și Header
 import { AuthProvider } from './context/AuthContext';
@@ -41,10 +41,12 @@ function App() {
             <Route path="/admin/create-account" element={<CreateAccountPage />} />
             <Route path="/admin/users/:id" element={<UserDetailsPage />} />
             <Route path="/admin/attendance" element={<AttendanceDashboard />} />
-            <Route path="/simulations" element={<SimulationsPage />} /> {/* NOU: Rută pentru simulări */}
+            {/* CORECȚIE: Ruta a fost schimbată la /admin/simulations */}
+            <Route path="/admin/simulations" element={<SimulationsPage />} />
           </Route>
 
           {/* Rută privată pentru schimbarea parolei (Admin & Client) */}
+          {/* Notă: Am scos /admin/ din ruta pentru change-password pentru a o face mai generală */}
           <Route element={<PrivateRoute allowedRoles={['admin', 'client']} />}>
             <Route path="/change-password" element={<ChangePasswordPage />} />
           </Route>
