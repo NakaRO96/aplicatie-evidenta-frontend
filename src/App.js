@@ -1,3 +1,5 @@
+// src/App.js
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
@@ -15,7 +17,7 @@ import NotFoundPage from './pages/NotFoundPage';
 import ClientDashboard from './pages/ClientDashboard';
 import AttendanceDashboard from './components/AttendanceDashboard';
 import AccessDenied from './pages/AccessDenied';
-import SimulationsPage from './pages/SimulationsPage';
+import QuickSimulationPage from './pages/QuickSimulationPage'; // NOU: Importat
 
 // Contextul de autentificare și Header
 import { AuthProvider } from './context/AuthContext';
@@ -41,12 +43,10 @@ function App() {
             <Route path="/admin/create-account" element={<CreateAccountPage />} />
             <Route path="/admin/users/:id" element={<UserDetailsPage />} />
             <Route path="/admin/attendance" element={<AttendanceDashboard />} />
-            {/* CORECȚIE: Ruta a fost schimbată la /admin/simulations */}
-            <Route path="/admin/simulations" element={<SimulationsPage />} />
+            <Route path="/admin/simulations" element={<QuickSimulationPage />} />
           </Route>
 
           {/* Rută privată pentru schimbarea parolei (Admin & Client) */}
-          {/* Notă: Am scos /admin/ din ruta pentru change-password pentru a o face mai generală */}
           <Route element={<PrivateRoute allowedRoles={['admin', 'client']} />}>
             <Route path="/change-password" element={<ChangePasswordPage />} />
           </Route>
