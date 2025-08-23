@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
-import { FaUserPlus, FaInfoCircle, FaTrashAlt, FaChevronLeft, FaChevronRight, FaUserCheck } from 'react-icons/fa';
+import { FaUserPlus, FaInfoCircle, FaTrashAlt, FaChevronLeft, FaChevronRight, FaUserCheck, FaRunning } from 'react-icons/fa';
 
 function AdminDashboard() {
   const [users, setUsers] = useState([]);
@@ -22,7 +22,6 @@ function AdminDashboard() {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      // Axios va folosi automat token-ul setat în AuthContext
       const res = await axios.get(`${BACKEND_URL}/api/users?filter=${filter}&page=${currentPage}&limit=${itemsPerPage}&searchQuery=${searchQuery}`);
       setUsers(res.data.users);
       setTotalPages(res.data.totalPages);
@@ -42,19 +41,15 @@ function AdminDashboard() {
     }
   };
 
-  // Folosim un singur useEffect pentru a gestiona toate stările
   useEffect(() => {
-    // Apelăm fetchUsers ori de câte ori se schimbă filter, searchQuery sau currentPage
     fetchUsers();
   }, [filter, searchQuery, currentPage]);
-
 
   const handleDeleteUser = async (userId, userName) => {
     if (window.confirm(`Ești sigur că vrei să ștergi utilizatorul ${userName} și toate datele asociate?`)) {
       try {
         await axios.delete(`${BACKEND_URL}/api/users/${userId}`);
         toast.success(`Utilizatorul ${userName} a fost șters cu succes.`);
-        // Reîmprospătăm lista de utilizatori pentru pagina curentă
         fetchUsers();
       } catch (err) {
         console.error('Eroare la ștergerea utilizatorului:', err);
@@ -95,6 +90,15 @@ function AdminDashboard() {
             Panou Administrator
           </h1>
           <div className="flex flex-col sm:flex-row gap-3">
+            {/* Butonul de "Simulare Rapidă" a fost adăugat aici */}
+            <Link
+              to="/admin/simulations"
+              className="bg-orange-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-orange-600 active:bg-orange-700 transition-all duration-300 shadow-md hover:shadow-lg text-center flex items-center justify-center gap-2"
+            >
+              <FaRunning />
+              Simulare Rapidă
+            </Link>
+
             <Link
               to="/admin/create-account"
               className="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 active:bg-green-800 transition-all duration-300 shadow-md hover:shadow-lg text-center flex items-center justify-center gap-2"
@@ -112,7 +116,7 @@ function AdminDashboard() {
             </Link>
 
             <button
-              onClick={logout} // Am eliminat handleLogout deoarece logout din useAuth face deja navigarea
+              onClick={logout}
               className="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 active:bg-red-800 transition-all duration-300 shadow-md hover:shadow-lg text-center"
             >
               Deconectare
@@ -128,7 +132,7 @@ function AdminDashboard() {
               value={filter}
               onChange={(e) => {
                 setFilter(e.target.value);
-                setCurrentPage(1); // Resetăm pagina la 1 când se schimbă filtrul
+                setCurrentPage(1);
               }}
               className="border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-3 focus:ring-blue-400 transition-all duration-200 bg-white shadow-sm"
             >
@@ -143,7 +147,7 @@ function AdminDashboard() {
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
-              setCurrentPage(1); // Resetăm pagina la 1 când se face o nouă căutare
+              setCurrentPage(1);
             }}
             className="border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-3 focus:ring-blue-400 flex-grow w-full sm:w-auto transition-all duration-200 shadow-sm"
           />
