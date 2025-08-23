@@ -1,9 +1,7 @@
-// src/pages/SimulationsPage.js
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { BACKEND_URL } from '../config/config';
+import { BACKEND_URL } from '../config/config.js'; // Aici am adăugat .js
 
 const SimulationsPage = () => {
   const [candidates, setCandidates] = useState([]);
