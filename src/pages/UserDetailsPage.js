@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import CourseTimer from '../components/CourseTimer';
 import { toast } from 'react-toastify';
-import { FaRunning, FaArrowLeft } from 'react-icons/fa'; // NOU: Adăugat FaArrowLeft
+import { FaRunning, FaArrowLeft } from 'react-icons/fa';
 
 function UserDetailsPage() {
   const { id } = useParams();
@@ -17,7 +17,7 @@ function UserDetailsPage() {
   const [attendanceError, setAttendanceError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [loadingMessage, setLoadingMessage] = useState("Se încarcă detaliile utilizatorului...");
-  
+
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -25,7 +25,6 @@ function UserDetailsPage() {
 
   const fetchUserDetails = async () => {
     try {
-      // Am eliminat header-ul manual.
       const res = await axios.get(`${BACKEND_URL}/api/users/${id}`);
       setUser(res.data.user);
       setSimulationResults(res.data.simulationResults);
@@ -38,6 +37,10 @@ function UserDetailsPage() {
         toast.error('Sesiunea a expirat. Te rugăm să te autentifici din nou.');
       } else if (err.response && err.response.status === 403) {
         toast.error('Acces neautorizat la resursă.');
+      } else if (err.response && err.response.status === 404) {
+        // Cazul în care utilizatorul nu există
+        toast.error('Utilizatorul nu a fost găsit.');
+        setUser(null);
       } else {
         toast.error('A apărut o eroare la preluarea detaliilor utilizatorului.');
       }
@@ -69,7 +72,6 @@ function UserDetailsPage() {
     }
 
     try {
-      // Am eliminat header-ul manual.
       await axios.put(`${BACKEND_URL}/api/users/${id}`, {
         name: editedUser.name,
         phoneNumber: editedUser.phoneNumber,
@@ -108,7 +110,6 @@ function UserDetailsPage() {
     const updatedAttendance = user.attendance ? [...user.attendance, newAttendanceEntry] : [newAttendanceEntry];
 
     try {
-      // Am eliminat header-ul manual.
       await axios.put(`${BACKEND_URL}/api/users/${id}`, { attendance: updatedAttendance });
       toast.success('Prezență adăugată cu succes!');
       setAttendanceDate('');
@@ -128,7 +129,6 @@ function UserDetailsPage() {
   const handleDeleteSimulation = async (simId) => {
     if (window.confirm('Ești sigur că vrei să ștergi acest rezultat al simulării? Această acțiune este ireversibilă.')) {
       try {
-        // Am eliminat header-ul manual.
         await axios.delete(`${BACKEND_URL}/api/simulations/${simId}`);
         toast.success('Rezultat șters cu succes!');
         fetchUserDetails();
@@ -147,6 +147,17 @@ function UserDetailsPage() {
     }
   };
 
+  const formatSecondsToMMSS = (totalSeconds) => {
+    if (totalSeconds === null || totalSeconds === undefined) {
+      return '-';
+    }
+    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+    const seconds = String(Math.floor(totalSeconds % 60)).padStart(2, '0');
+    return `${minutes}:${seconds}`;
+  };
+
+  // --- Începutul modificărilor cruciale ---
+  // Starea de încărcare
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200 text-xl font-semibold text-blue-800">
@@ -156,29 +167,49 @@ function UserDetailsPage() {
     );
   }
 
+  // Aici verificăm dacă user-ul este null (în cazul unei erori 404 de exemplu)
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200 text-center p-4">
+        <div className="bg-white shadow-xl rounded-2xl p-8 sm:p-12 border border-blue-100">
+          <FaArrowLeft className="text-red-500 text-6xl mx-auto mb-4" />
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-800 mb-2">
+            Eroare
+          </h1>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-700 mb-4">
+            Utilizatorul nu a fost găsit.
+          </h2>
+          <p className="text-gray-600 mb-6 max-w-md mx-auto">
+            Este posibil ca ID-ul utilizatorului să fie incorect sau datele să nu poată fi încărcate.
+          </p>
+          <Link
+            to="/admin"
+            className="bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 hover:bg-blue-700 active:bg-blue-800 shadow-md hover:shadow-lg"
+          >
+            Înapoi la Panoul Administrator
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Starea pentru cronometru
   if (showTimer) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200 p-4 sm:p-6 lg:p-8 font-sans antialiased flex items-center justify-center">
-        <CourseTimer 
-          userId={user._id} 
+        <CourseTimer
+          userId={user._id}
           onSimulationSaved={() => {
             setShowTimer(false);
             fetchUserDetails();
-          }} 
+          }}
           onCancel={() => setShowTimer(false)}
         />
       </div>
     );
   }
 
-  const formatSecondsToMMSS = (totalSeconds) => {
-    if (totalSeconds === null || totalSeconds === undefined) {
-      return '-';
-    }
-    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
-    const seconds = String(Math.floor(totalSeconds % 60)).padStart(2, '0'); // Am adăugat Math.floor aici
-    return `${minutes}:${seconds}`;
-  };
+  // --- Sfârșitul verificărilor de siguranță ---
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200 p-4 sm:p-6 lg:p-8 font-sans antialiased">
@@ -187,11 +218,11 @@ function UserDetailsPage() {
           to="/admin"
           className="inline-flex items-center text-blue-700 hover:text-blue-900 font-semibold mb-6 transition-colors duration-200 text-lg group"
         >
-          {/* Am înlocuit SVG-ul cu o iconiță FaArrowLeft */}
           <FaArrowLeft className="w-5 h-5 mr-2 transform group-hover:-translate-x-1 transition-transform duration-200" />
           Înapoi la Panoul Administrator
         </Link>
 
+        {/* Acum, acest cod este sigur, deoarece am verificat mai sus dacă 'user' nu este null */}
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-blue-800 mb-10 text-center tracking-tight">
           Detalii Utilizator: <span className="text-indigo-600">{user.name}</span>
         </h1>
