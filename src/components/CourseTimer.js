@@ -183,14 +183,14 @@ function CourseTimer({ userId, onSimulationSaved, onCancel }) {
     }
   };
   
-  const handleJavelinTimeChange = (e) => {
-    setJavelinTime(parseFloat(e.target.value) || 0);
+  const handleTimeChange = (e, setter) => {
+    setter(parseFloat(e.target.value) || 0);
   };
   
   return (
-    <div className="bg-gradient-to-br from-blue-100 to-indigo-200 min-h-screen p-4 sm:p-6 font-sans antialiased flex items-center justify-center pt-24">
+    <div className="bg-gradient-to-br from-blue-100 to-indigo-200 min-h-screen p-4 sm:p-6 font-sans antialiased flex flex-col items-center justify-center pt-24">
       <div className="w-full max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-6 sm:p-8 space-y-6 transform transition-all duration-300 hover:shadow-2xl">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center mb-6">
           <button
             onClick={onCancel}
             className="text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-2"
@@ -202,39 +202,35 @@ function CourseTimer({ userId, onSimulationSaved, onCancel }) {
           </h1>
         </div>
 
-        <div className="sticky top-0 z-50 bg-white p-2 shadow-md rounded-b-lg -mx-4 sm:-mx-6 lg:-mx-8 mb-4">
-          <div className="text-center text-2xl sm:text-3xl font-extrabold text-blue-900 font-mono bg-blue-50 p-2 rounded-lg shadow-inner">
-            {timerDisplay}
-          </div>
-          <div className="flex justify-center gap-2 mb-2 mt-2">
-            <button
-              onClick={stopTimer}
-              className={`flex items-center justify-center px-6 py-3 rounded-lg text-lg font-semibold transition-all duration-300 ${!timerRunning ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 active:bg-red-800 shadow-md hover:shadow-lg'} text-white`}
-              disabled={!timerRunning}
-            >
-              <FaStop className="mr-2" /> Stop Timp
-            </button>
-            <button
-              onClick={startJavelinTimer}
-              className={`flex items-center justify-center px-6 py-3 rounded-lg text-lg font-semibold transition-all duration-300 ${javelinTimerActive ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-md hover:shadow-lg'} text-white`}
-              disabled={javelinTimerActive || !timerRunning}
-            >
-              <FaRunning className="mr-2" /> Start Timp Jaloane
-            </button>
-          </div>
+        <div className="text-center text-3xl font-extrabold text-blue-900 font-mono bg-blue-50 p-4 rounded-lg shadow-inner mb-6">
+          {timerDisplay}
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row justify-center gap-4 mb-8">
           <button
             onClick={startTimer}
-            className={`flex items-center justify-center px-4 py-3 rounded-xl text-lg font-semibold transition-all duration-300 ${timerRunning ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 active:bg-green-800 shadow-md hover:shadow-lg'} text-white`}
+            className={`flex-1 flex items-center justify-center px-4 py-3 rounded-xl text-lg font-semibold transition-all duration-300 ${timerRunning ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 active:bg-green-800 shadow-md hover:shadow-lg'} text-white`}
             disabled={timerRunning}
           >
             <FaPlay className="mr-2" /> Start Cursă
           </button>
           <button
+            onClick={stopTimer}
+            className={`flex-1 flex items-center justify-center px-4 py-3 rounded-xl text-lg font-semibold transition-all duration-300 ${!timerRunning ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 active:bg-red-800 shadow-md hover:shadow-lg'} text-white`}
+            disabled={!timerRunning}
+          >
+            <FaStop className="mr-2" /> Stop Timp
+          </button>
+          <button
+            onClick={startJavelinTimer}
+            className={`flex-1 flex items-center justify-center px-4 py-3 rounded-xl text-lg font-semibold transition-all duration-300 ${javelinTimerActive || !timerRunning ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-md hover:shadow-lg'} text-white`}
+            disabled={javelinTimerActive || !timerRunning}
+          >
+            <FaRunning className="mr-2" /> Start Timp Jaloane
+          </button>
+          <button
             onClick={resetAll}
-            className="flex items-center justify-center bg-gray-500 text-white px-4 py-3 rounded-xl text-lg font-semibold hover:bg-gray-600 active:bg-gray-700 shadow-md hover:shadow-lg transition-all duration-300"
+            className="flex-1 flex items-center justify-center bg-gray-500 text-white px-4 py-3 rounded-xl text-lg font-semibold hover:bg-gray-600 active:bg-gray-700 shadow-md hover:shadow-lg transition-all duration-300 mt-2 sm:mt-0"
           >
             <FaRedo className="mr-2" /> Reset
           </button>
@@ -278,8 +274,8 @@ function CourseTimer({ userId, onSimulationSaved, onCancel }) {
                 type="number"
                 step="0.01"
                 value={rawTime.toFixed(2)}
-                onChange={(e) => setRawTime(parseFloat(e.target.value))}
-                className="w-full p-2 rounded-lg border-2 border-gray-300 text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                onChange={(e) => handleTimeChange(e, setRawTime)}
+                className="w-full p-2 rounded-lg text-lg font-medium bg-transparent border-none focus:outline-none focus:ring-0"
                 readOnly={timerRunning}
               />
             </div>
@@ -289,8 +285,8 @@ function CourseTimer({ userId, onSimulationSaved, onCancel }) {
                 type="number"
                 step="0.01"
                 value={totalTime.toFixed(2)}
-                onChange={(e) => setTotalTime(parseFloat(e.target.value))}
-                className="w-full p-2 rounded-lg border-2 border-gray-300 text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                onChange={(e) => handleTimeChange(e, setTotalTime)}
+                className="w-full p-2 rounded-lg text-lg font-medium bg-transparent border-none focus:outline-none focus:ring-0"
                 readOnly={timerRunning}
               />
             </div>
@@ -300,13 +296,13 @@ function CourseTimer({ userId, onSimulationSaved, onCancel }) {
                 type="number"
                 step="0.01"
                 value={javelinTime !== null ? javelinTime.toFixed(2) : ''}
-                onChange={(e) => setJavelinTime(parseFloat(e.target.value) || null)}
-                className="w-full p-2 rounded-lg border-2 border-gray-300 text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                onChange={(e) => handleTimeChange(e, setJavelinTime)}
+                className="w-full p-2 rounded-lg text-lg font-medium bg-transparent border-none focus:outline-none focus:ring-0"
                 readOnly={javelinTimerActive || timerRunning}
               />
             </div>
             <p className="text-lg font-medium">
-              <span className="font-semibold text-blue-700">Penalizări:</span> {penalties.length} x {penaltySeconds}s = {penaltyTime}s
+              <span className="font-semibold text-blue-700">Penalizări:</span> {penalties.length} x {penaltySeconds}s = {penaltyTime.toFixed(2)}s
             </p>
             <p className="text-lg font-medium col-span-1 md:col-span-2">
               <span className="font-semibold text-blue-700">Obstacole penalizate:</span> {penalties.join(', ') || 'Niciunul'}
