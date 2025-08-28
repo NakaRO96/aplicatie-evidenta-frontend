@@ -29,16 +29,12 @@ const Header = () => {
         <nav className="hidden md:flex items-center space-x-6">
           {isAuthenticated ? (
             <>
-              {userRole === 'admin' && ( // Acum verificăm doar pentru 'admin'
-                <>
-                  <Link to="/admin" className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200">
-                    Utilizatori
-                  </Link>
-                  <Link to="/admin/create-account" className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200">
-                    Creează Cont
-                  </Link>
-                </>
+              {userRole === 'admin' && (
+                <Link to="/admin" className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200">
+                  Utilizatori
+                </Link>
               )}
+              {/* Ruta corectă pentru Schimbă Parola este specifică pentru admin */}
               <Link to="/admin/change-password" className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200">
                 Schimbă Parola
               </Link>
@@ -70,35 +66,26 @@ const Header = () => {
         </div>
 
         {isMenuOpen && isAuthenticated && (
-          <div className="md:hidden mt-4 space-y-4 text-center">
-            {userRole === 'admin' && ( // Acum verificăm doar pentru 'admin'
-              <>
-                <Link
-                  to="/admin"
-                  onClick={handleLinkClick}
-                  className="block text-gray-800 py-2 border-b border-gray-200 hover:bg-gray-100 transition-colors duration-200"
-                >
-                  Utilizatori
-                </Link>
-                <Link
-                  to="/admin/create-account"
-                  onClick={handleLinkClick}
-                  className="block text-gray-800 py-2 border-b border-gray-200 hover:bg-gray-100 transition-colors duration-200"
-                >
-                  Creează Cont
-                </Link>
-              </>
+          <div className="md:hidden absolute top-16 left-0 w-full bg-white shadow-lg py-2 transition-all duration-300 transform translate-y-0">
+            {userRole === 'admin' && (
+              <Link
+                to="/admin"
+                onClick={handleLinkClick}
+                className="block text-gray-800 py-2 border-b border-gray-200 hover:bg-gray-100 transition-colors duration-200 text-center"
+              >
+                Utilizatori
+              </Link>
             )}
             <Link
               to="/admin/change-password"
               onClick={handleLinkClick}
-              className="block text-gray-800 py-2 border-b border-gray-200 hover:bg-gray-100 transition-colors duration-200"
+              className="block text-gray-800 py-2 border-b border-gray-200 hover:bg-gray-100 transition-colors duration-200 text-center"
             >
               Schimbă Parola
             </Link>
             <button
               onClick={handleLogout}
-              className="block w-full text-red-600 py-2 hover:bg-gray-100 transition-colors duration-200"
+              className="block w-full text-red-600 py-2 hover:bg-gray-100 transition-colors duration-200 text-center"
             >
               Deconectare
             </button>

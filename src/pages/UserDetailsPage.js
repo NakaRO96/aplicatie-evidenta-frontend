@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import CourseTimer from '../components/CourseTimer';
 import { toast } from 'react-toastify';
-import { FaRunning, FaArrowLeft } from 'react-icons/fa';
+import { FaRunning, FaArrowLeft, FaTrashAlt, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
 
 function UserDetailsPage() {
   const { id } = useParams();
@@ -17,6 +17,10 @@ function UserDetailsPage() {
   const [attendanceError, setAttendanceError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [loadingMessage, setLoadingMessage] = useState("Se încarcă detaliile utilizatorului...");
+
+  // Stări noi pentru editarea simulărilor
+  const [editingSimulationId, setEditingSimulationId] = useState(null);
+  const [editedSimulation, setEditedSimulation] = useState({});
 
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -38,7 +42,6 @@ function UserDetailsPage() {
       } else if (err.response && err.response.status === 403) {
         toast.error('Acces neautorizat la resursă.');
       } else if (err.response && err.response.status === 404) {
-        // Cazul în care utilizatorul nu există
         toast.error('Utilizatorul nu a fost găsit.');
         setUser(null);
       } else {
@@ -102,15 +105,9 @@ function UserDetailsPage() {
     }
     setAttendanceError('');
 
-    const newAttendanceEntry = {
-      date: new Date(attendanceDate).toISOString(),
-      present: true
-    };
-
-    const updatedAttendance = user.attendance ? [...user.attendance, newAttendanceEntry] : [newAttendanceEntry];
-
     try {
-      await axios.put(`${BACKEND_URL}/api/users/${id}`, { attendance: updatedAttendance });
+      // Endpointul de backend trebuie să existe pentru această acțiune
+      await axios.post(`${BACKEND_URL}/api/users/${id}/attendance`, { date: attendanceDate });
       toast.success('Prezență adăugată cu succes!');
       setAttendanceDate('');
       fetchUserDetails();
@@ -122,6 +119,21 @@ function UserDetailsPage() {
         toast.error('Sesiunea a expirat. Te rugăm să te autentifici din nou.');
       } else {
         toast.error('A apărut o eroare la adăugarea prezenței.');
+      }
+    }
+  };
+  
+  const handleDeleteAttendance = async (dateToDelete) => {
+    if (window.confirm('Ești sigur că vrei să ștergi această prezență?')) {
+      try {
+        const updatedAttendance = user.attendance.filter(att => new Date(att.date).toISOString() !== dateToDelete.toISOString());
+        // Atenție: Această metodă funcționează doar dacă backend-ul permite update-ul complet al listei
+        await axios.put(`${BACKEND_URL}/api/users/${id}`, { attendance: updatedAttendance });
+        toast.success('Prezență ștearsă cu succes!');
+        fetchUserDetails();
+      } catch (err) {
+        console.error('Eroare la ștergerea prezenței:', err);
+        toast.error('A apărut o eroare la ștergerea prezenței.');
       }
     }
   };
@@ -147,8 +159,39 @@ function UserDetailsPage() {
     }
   };
 
+  const handleEditSimulation = (result) => {
+    setEditingSimulationId(result._id);
+    setEditedSimulation({
+      ...result,
+      penaltiesList: result.penaltiesList.join(', '),
+      eliminatedObstaclesList: result.eliminatedObstaclesList.join(', ')
+    });
+  };
+
+  const handleUpdateSimulation = async () => {
+    try {
+      // Backend-ul trebuie să aibă un endpoint PUT /api/simulations/:id
+      await axios.put(`${BACKEND_URL}/api/simulations/${editingSimulationId}`, {
+        ...editedSimulation,
+        penaltiesList: editedSimulation.penaltiesList.split(',').map(s => s.trim()).filter(s => s),
+        eliminatedObstaclesList: editedSimulation.eliminatedObstaclesList.split(',').map(s => s.trim()).filter(s => s)
+      });
+      toast.success('Simulare actualizată cu succes!');
+      setEditingSimulationId(null);
+      fetchUserDetails();
+    } catch (err) {
+      console.error('Eroare la actualizarea simulării:', err);
+      toast.error('A apărut o eroare la actualizarea simulării. Verifică backend-ul.');
+    }
+  };
+
+  const handleCancelEditSimulation = () => {
+    setEditingSimulationId(null);
+    setEditedSimulation({});
+  };
+
   const formatSecondsToMMSS = (totalSeconds) => {
-    if (totalSeconds === null || totalSeconds === undefined) {
+    if (totalSeconds === null || totalSeconds === undefined || isNaN(totalSeconds)) {
       return '-';
     }
     const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
@@ -156,8 +199,6 @@ function UserDetailsPage() {
     return `${minutes}:${seconds}`;
   };
 
-  // --- Începutul modificărilor cruciale ---
-  // Starea de încărcare
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200 text-xl font-semibold text-blue-800">
@@ -167,18 +208,13 @@ function UserDetailsPage() {
     );
   }
 
-  // Aici verificăm dacă user-ul este null (în cazul unei erori 404 de exemplu)
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200 text-center p-4">
         <div className="bg-white shadow-xl rounded-2xl p-8 sm:p-12 border border-blue-100">
           <FaArrowLeft className="text-red-500 text-6xl mx-auto mb-4" />
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-800 mb-2">
-            Eroare
-          </h1>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-700 mb-4">
-            Utilizatorul nu a fost găsit.
-          </h2>
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-800 mb-2">Eroare</h1>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-700 mb-4">Utilizatorul nu a fost găsit.</h2>
           <p className="text-gray-600 mb-6 max-w-md mx-auto">
             Este posibil ca ID-ul utilizatorului să fie incorect sau datele să nu poată fi încărcate.
           </p>
@@ -193,7 +229,6 @@ function UserDetailsPage() {
     );
   }
 
-  // Starea pentru cronometru
   if (showTimer) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200 p-4 sm:p-6 lg:p-8 font-sans antialiased flex items-center justify-center">
@@ -209,8 +244,6 @@ function UserDetailsPage() {
     );
   }
 
-  // --- Sfârșitul verificărilor de siguranță ---
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200 p-4 sm:p-6 lg:p-8 font-sans antialiased">
       <div className="max-w-7xl mx-auto">
@@ -222,7 +255,6 @@ function UserDetailsPage() {
           Înapoi la Panoul Administrator
         </Link>
 
-        {/* Acum, acest cod este sigur, deoarece am verificat mai sus dacă 'user' nu este null */}
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-blue-800 mb-10 text-center tracking-tight">
           Detalii Utilizator: <span className="text-indigo-600">{user.name}</span>
         </h1>
@@ -319,11 +351,19 @@ function UserDetailsPage() {
                 {user.attendance
                   .sort((a, b) => new Date(b.date) - new Date(a.date))
                   .map((att, index) => (
-                    <li key={index} className="text-base">
-                      <span className="font-medium">{new Date(att.date).toLocaleDateString('ro-RO')}</span> -{' '}
-                      <span className={`${att.present ? 'text-green-600' : 'text-red-600'} font-semibold`}>
-                        {att.present ? 'Prezent' : 'Absent'}
-                      </span>
+                    <li key={index} className="flex items-center justify-between text-base">
+                      <div>
+                        <span className="font-medium">{new Date(att.date).toLocaleDateString('ro-RO')}</span> -{' '}
+                        <span className={`${att.present ? 'text-green-600' : 'text-red-600'} font-semibold`}>
+                          {att.present ? 'Prezent' : 'Absent'}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteAttendance(new Date(att.date))}
+                        className="text-red-500 hover:text-red-700 transition-colors duration-200"
+                      >
+                        <FaTrashAlt />
+                      </button>
                     </li>
                   ))}
               </ul>
@@ -366,24 +406,84 @@ function UserDetailsPage() {
                   {simulationResults.map((result) => (
                     <tr key={result._id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150">
                       <td className="py-3 px-4 sm:px-6">{new Date(result.date).toLocaleDateString('ro-RO')}</td>
-                      <td className="py-3 px-4 sm:px-6 font-mono">{formatSecondsToMMSS(result.rawTime)}</td>
-                      <td className="py-3 px-4 sm:px-6">{result.penaltyTime}s</td>
-                      <td className="py-3 px-4 sm:px-6 font-mono font-bold text-teal-700">{formatSecondsToMMSS(result.totalTime)}</td>
-                      <td className="py-3 px-4 sm:px-6 font-mono">{result.javelinTime ? formatSecondsToMMSS(result.javelinTime) : '-'}</td>
-                      <td className="py-3 px-4 sm:px-6 text-gray-600">
-                        {result.penaltiesList?.length > 0 ? result.penaltiesList.join(', ') : '-'}
-                      </td>
-                      <td className="py-3 px-4 sm:px-6 text-gray-600">
-                        {result.eliminatedObstaclesList?.length > 0 ? result.eliminatedObstaclesList.join(', ') : '-'}
-                      </td>
-                      <td className="py-3 px-4 sm:px-6">
-                        <button
-                          onClick={() => handleDeleteSimulation(result._id)}
-                          className="bg-red-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-red-600 active:bg-red-700 transition-all duration-200 shadow-sm hover:shadow-md"
-                        >
-                          Șterge
-                        </button>
-                      </td>
+                      {editingSimulationId === result._id ? (
+                        <>
+                          <td className="py-3 px-4 sm:px-6">
+                            <input
+                              type="number"
+                              className="w-20 border rounded px-1"
+                              value={editedSimulation.rawTime}
+                              onChange={(e) => setEditedSimulation({ ...editedSimulation, rawTime: parseFloat(e.target.value) })}
+                            />
+                          </td>
+                          <td className="py-3 px-4 sm:px-6">
+                            <input
+                              type="number"
+                              className="w-20 border rounded px-1"
+                              value={editedSimulation.penaltyTime}
+                              onChange={(e) => setEditedSimulation({ ...editedSimulation, penaltyTime: parseFloat(e.target.value) })}
+                            />
+                          </td>
+                          <td className="py-3 px-4 sm:px-6 font-mono font-bold text-teal-700">
+                            {formatSecondsToMMSS(editedSimulation.rawTime + editedSimulation.penaltyTime)}
+                          </td>
+                          <td className="py-3 px-4 sm:px-6">
+                            <input
+                              type="number"
+                              className="w-20 border rounded px-1"
+                              value={editedSimulation.javelinTime}
+                              onChange={(e) => setEditedSimulation({ ...editedSimulation, javelinTime: parseFloat(e.target.value) })}
+                            />
+                          </td>
+                          <td className="py-3 px-4 sm:px-6">
+                            <input
+                              type="text"
+                              className="w-full border rounded px-1"
+                              value={editedSimulation.penaltiesList}
+                              onChange={(e) => setEditedSimulation({ ...editedSimulation, penaltiesList: e.target.value })}
+                            />
+                          </td>
+                          <td className="py-3 px-4 sm:px-6">
+                            <input
+                              type="text"
+                              className="w-full border rounded px-1"
+                              value={editedSimulation.eliminatedObstaclesList}
+                              onChange={(e) => setEditedSimulation({ ...editedSimulation, eliminatedObstaclesList: e.target.value })}
+                            />
+                          </td>
+                          <td className="py-3 px-4 sm:px-6 flex gap-2">
+                            <button onClick={handleUpdateSimulation} className="text-green-600 hover:text-green-800"><FaSave /></button>
+                            <button onClick={handleCancelEditSimulation} className="text-gray-500 hover:text-gray-700"><FaTimes /></button>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="py-3 px-4 sm:px-6 font-mono">{formatSecondsToMMSS(result.rawTime)}</td>
+                          <td className="py-3 px-4 sm:px-6">{result.penaltyTime}s</td>
+                          <td className="py-3 px-4 sm:px-6 font-mono font-bold text-teal-700">{formatSecondsToMMSS(result.totalTime)}</td>
+                          <td className="py-3 px-4 sm:px-6 font-mono">{result.javelinTime ? formatSecondsToMMSS(result.javelinTime) : '-'}</td>
+                          <td className="py-3 px-4 sm:px-6 text-gray-600">
+                            {result.penaltiesList?.length > 0 ? result.penaltiesList.join(', ') : '-'}
+                          </td>
+                          <td className="py-3 px-4 sm:px-6 text-gray-600">
+                            {result.eliminatedObstaclesList?.length > 0 ? result.eliminatedObstaclesList.join(', ') : '-'}
+                          </td>
+                          <td className="py-3 px-4 sm:px-6 flex gap-2">
+                            <button
+                              onClick={() => handleEditSimulation(result)}
+                              className="bg-yellow-500 text-white px-3 py-2 rounded-md text-sm font-semibold hover:bg-yellow-600 transition-all duration-200 shadow-sm"
+                            >
+                              Editează
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSimulation(result._id)}
+                              className="bg-red-500 text-white px-3 py-2 rounded-md text-sm font-semibold hover:bg-red-600 transition-all duration-200 shadow-sm"
+                            >
+                              Șterge
+                            </button>
+                          </td>
+                        </>
+                      )}
                     </tr>
                   ))}
                 </tbody>

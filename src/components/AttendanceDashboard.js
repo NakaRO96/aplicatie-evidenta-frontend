@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaUserCheck } from 'react-icons/fa';
+import { FaUserCheck, FaArrowLeft } from 'react-icons/fa'; // Am adăugat FaArrowLeft
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom'; // Am adăugat Link
 import { useAuth } from '../context/AuthContext';
 
 function AttendanceDashboard() {
@@ -25,7 +25,6 @@ function AttendanceDashboard() {
                     Authorization: `Bearer ${token}`
                 }
             });
-            // NOTĂ: Am eliminat filtrarea pe frontend. Backend-ul deja o face.
             setCandidates(res.data.users);
         } catch (err) {
             console.error('Eroare la preluarea candidaților:', err);
@@ -47,9 +46,9 @@ function AttendanceDashboard() {
             try {
                 const token = localStorage.getItem('token');
                 const response = await axios.post(
-                    `${BACKEND_URL}/api/users/${candidateId}/attendance`, // RUTA CORECTĂ
+                    `${BACKEND_URL}/api/users/${candidateId}/attendance`,
                     {
-                        date: new Date().toISOString().split('T')[0] // Trimiți doar data
+                        date: new Date().toISOString().split('T')[0]
                     },
                     {
                         headers: {
@@ -70,7 +69,6 @@ function AttendanceDashboard() {
         fetchCandidates();
     }, []);
 
-    // Filtrarea candidaților pe baza numelui sau numărului de telefon
     const filteredCandidates = candidates.filter(candidate =>
         candidate.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (candidate.phoneNumber && candidate.phoneNumber.includes(searchQuery))
@@ -79,6 +77,13 @@ function AttendanceDashboard() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200 p-4 sm:p-6 lg:p-8 font-sans antialiased">
             <div className="max-w-4xl mx-auto">
+                <Link
+                    to="/admin"
+                    className="inline-flex items-center text-blue-700 hover:text-blue-900 font-semibold mb-6 transition-colors duration-200 text-lg group"
+                >
+                    <FaArrowLeft className="w-5 h-5 mr-2 transform group-hover:-translate-x-1 transition-transform duration-200" />
+                    Înapoi la Panoul Administrator
+                </Link>
                 <h1 className="text-3xl sm:text-4xl font-extrabold text-blue-800 tracking-tight text-center mb-6">
                     Înregistrare Prezență Rapidă
                 </h1>
