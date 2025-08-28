@@ -98,7 +98,7 @@ function CourseTimer({ userId, onSimulationSaved }) {
     try {
       const token = localStorage.getItem('token');
       await axios.post(`${BACKEND_URL}/api/simulations`, {
-        userId: userId,
+        user: userId, // <-- CORECT: Am schimbat 'userId' în 'user'
         rawTime: elapsedSeconds,
         penaltyTime: totalPenaltySeconds,
         totalTime: finalTotalSeconds,
@@ -148,7 +148,7 @@ function CourseTimer({ userId, onSimulationSaved }) {
     setEliminatedObstacles(prevEliminated => [...prevEliminated, obstacle]);
     toast.error(`Obstacol marcat ca eliminat: ${obstacle}`);
   };
-  
+
   // Utilizăm useEffect pentru a actualiza afișajele atunci când stările se schimbă
   useEffect(() => {
     const rawTime = startTimeRef.current ? (Date.now() - startTimeRef.current) / 1000 : 0;
@@ -159,7 +159,7 @@ function CourseTimer({ userId, onSimulationSaved }) {
     if (javelinTimerActive && javelinStartTimeRef.current) {
         javelinTime = (Date.now() - javelinStartTimeRef.current) / 1000;
     }
-    
+
     // Recalculează și afișează datele de fiecare dată când se schimbă penalizările
     const update = () => {
       document.getElementById('rawTimeDisplay').innerText = `Timp fără penalizări: ${formatTime(rawTime)}`;
@@ -171,13 +171,13 @@ function CourseTimer({ userId, onSimulationSaved }) {
     };
 
     update();
-    
+
     // Clean-up pentru a preveni memory leaks
     let intervalId;
     if (javelinTimerActive) {
         intervalId = setInterval(update, 100);
     }
-    
+
     return () => clearInterval(intervalId);
 
   }, [penalties, eliminatedObstacles, javelinTimerActive, timerRunning]);
