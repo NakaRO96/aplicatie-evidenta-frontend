@@ -34,7 +34,7 @@ const Header = () => {
                   Utilizatori
                 </Link>
               )}
-              {/* Ruta corectă pentru Schimbă Parola este specifică pentru admin */}
+              {/* Corecție: Link-ul "Schimbă Parola" te duce acum la ruta corectă */}
               <Link to="/admin/change-password" className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200">
                 Schimbă Parola
               </Link>

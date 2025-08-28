@@ -114,13 +114,6 @@ function AdminDashboard() {
               <FaUserCheck />
               Prezență Antrenament
             </Link>
-
-            <button
-              onClick={logout}
-              className="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 active:bg-red-800 transition-all duration-300 shadow-md hover:shadow-lg text-center"
-            >
-              Deconectare
-            </button>
           </div>
         </div>
 
