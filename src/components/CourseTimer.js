@@ -21,7 +21,7 @@ function formatTime(totalSeconds) {
   return `${minutes}:${seconds}`;
 }
 
-function CourseTimer({ userId, onSimulationSaved, onCancel }) {
+function CourseTimer({ userId, onSimulationSaved }) {
   const [timerDisplay, setTimerDisplay] = useState('00:00.00');
   const [timerRunning, setTimerRunning] = useState(false);
   const [isStopped, setIsStopped] = useState(false);
@@ -188,42 +188,37 @@ function CourseTimer({ userId, onSimulationSaved, onCancel }) {
   };
 
   return (
-    <div className="bg-gradient-to-br from-blue-100 to-indigo-200 min-h-screen p-4 sm:p-6 font-sans antialiased flex flex-col items-center justify-center pt-24">
-      <div className="w-full max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-6 sm:p-8 space-y-6 transform transition-all duration-300 hover:shadow-2xl">
-        <div className="flex justify-between items-center mb-6">
+    <div className="bg-gradient-to-br from-blue-100 to-indigo-200 min-h-screen p-4 sm:p-6 font-sans antialiased flex flex-col items-center justify-start">
+      
+      <div className="w-full bg-white rounded-b-2xl shadow-xl p-6 sm:p-8 space-y-6 transform transition-all duration-300 hover:shadow-2xl">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-center text-blue-800 tracking-tight">
+          Monitorizare Timp Traseu Aplicativ
+        </h1>
+      </div>
+
+      <div className="sticky top-0 z-50 w-full bg-white p-2 shadow-md rounded-b-lg -mt-8">
+        <div className="text-center text-3xl font-extrabold text-blue-900 font-mono bg-blue-50 p-4 rounded-lg shadow-inner">
+          {timerDisplay}
+        </div>
+        <div className="flex justify-center gap-4 mt-4">
           <button
-            onClick={onCancel}
-            className="text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-2"
+            onClick={stopTimer}
+            className={`flex-1 flex items-center justify-center px-6 py-3 rounded-lg text-lg font-semibold transition-all duration-300 ${!timerRunning ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 active:bg-red-800 shadow-md hover:shadow-lg'} text-white`}
+            disabled={!timerRunning}
           >
-            <FaRedo /> Anulează și alege alt candidat
+            <FaStop className="mr-2" /> Stop Timp
           </button>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-center text-blue-800 tracking-tight flex-1">
-            Monitorizare Timp Traseu Aplicativ
-          </h1>
+          <button
+            onClick={startJavelinTimer}
+            className={`flex-1 flex items-center justify-center px-6 py-3 rounded-lg text-lg font-semibold transition-all duration-300 ${javelinTimerActive || !timerRunning ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-md hover:shadow-lg'} text-white`}
+            disabled={javelinTimerActive || !timerRunning}
+          >
+            <FaRunning className="mr-2" /> Start Timp Jaloane
+          </button>
         </div>
-
-        <div className="sticky top-0 z-50 bg-white p-2 shadow-md rounded-b-lg -mx-4 sm:-mx-6 lg:-mx-8 mb-4">
-          <div className="text-center text-3xl font-extrabold text-blue-900 font-mono bg-blue-50 p-4 rounded-lg shadow-inner">
-            {timerDisplay}
-          </div>
-          <div className="flex justify-center gap-4 mt-4">
-            <button
-              onClick={stopTimer}
-              className={`flex-1 flex items-center justify-center px-6 py-3 rounded-lg text-lg font-semibold transition-all duration-300 ${!timerRunning ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 active:bg-red-800 shadow-md hover:shadow-lg'} text-white`}
-              disabled={!timerRunning}
-            >
-              <FaStop className="mr-2" /> Stop Timp
-            </button>
-            <button
-              onClick={startJavelinTimer}
-              className={`flex-1 flex items-center justify-center px-6 py-3 rounded-lg text-lg font-semibold transition-all duration-300 ${javelinTimerActive || !timerRunning ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-md hover:shadow-lg'} text-white`}
-              disabled={javelinTimerActive || !timerRunning}
-            >
-              <FaRunning className="mr-2" /> Start Timp Jaloane
-            </button>
-          </div>
-        </div>
-
+      </div>
+      
+      <div className="w-full max-w-5xl mx-auto space-y-6 mt-8">
         <div className="flex flex-col sm:flex-row justify-center gap-4 mb-8">
           <button
             onClick={startTimer}
