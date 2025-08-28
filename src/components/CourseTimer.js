@@ -31,17 +31,37 @@ function CourseTimer({ userId, onSimulationSaved, onCancel }) {
   const [penalties, setPenalties] = useState([]);
   const [eliminatedObstacles, setEliminatedObstacles] = useState([]);
   
+  const [rawTime, setRawTime] = useState(0);
+  const [penaltyTime, setPenaltyTime] = useState(0);
+  const [totalTime, setTotalTime] = useState(0);
+  const [javelinTime, setJavelinTime] = useState(null);
+
   const startTimeRef = useRef(null);
   const intervalRef = useRef(null);
   const javelinStartTimeRef = useRef(null);
+  
   const { user: authUser } = useAuth();
   
-  const calculateFinalTime = (rawTime, currentPenalties) => {
-    const totalPenaltySeconds = currentPenalties.length * penaltySeconds;
-    const finalTotalSeconds = rawTime + totalPenaltySeconds;
-    return { totalPenaltySeconds, finalTotalSeconds };
-  };
+  useEffect(() => {
+    if (timerRunning) {
+      startTimeRef.current = Date.now() - rawTime * 1000;
+      intervalRef.current = setInterval(() => {
+        const elapsed = (Date.now() - startTimeRef.current) / 1000;
+        setRawTime(elapsed);
+        setTimerDisplay(formatTime(elapsed));
+      }, 100);
+    } else {
+      clearInterval(intervalRef.current);
+    }
+    return () => clearInterval(intervalRef.current);
+  }, [timerRunning, rawTime]);
 
+  useEffect(() => {
+    const newPenaltyTime = penalties.length * penaltySeconds;
+    setPenaltyTime(newPenaltyTime);
+    setTotalTime(rawTime + newPenaltyTime);
+  }, [penalties, rawTime]);
+  
   const startTimer = () => {
     if (!userId) {
       toast.error("Eroare: Niciun utilizator selectat pentru simulare. Reîncarcă pagina sau selectează un utilizator.");
@@ -54,17 +74,14 @@ function CourseTimer({ userId, onSimulationSaved, onCancel }) {
     
     setPenalties([]);
     setEliminatedObstacles([]);
-    javelinStartTimeRef.current = null;
+    setRawTime(0);
+    setPenaltyTime(0);
+    setTotalTime(0);
+    setJavelinTime(null);
     setJavelinTimerActive(false);
     setIsStopped(false);
     
-    startTimeRef.current = Date.now();
     setTimerRunning(true);
-    
-    intervalRef.current = setInterval(() => {
-      const elapsed = (Date.now() - startTimeRef.current) / 1000;
-      setTimerDisplay(formatTime(elapsed));
-    }, 100);
   };
 
   const stopTimer = () => {
@@ -72,18 +89,19 @@ function CourseTimer({ userId, onSimulationSaved, onCancel }) {
       toast.error("Cronometrul nu este pornit.");
       return;
     }
-    clearInterval(intervalRef.current);
     setTimerRunning(false);
     setIsStopped(true);
   };
 
   const resetAll = () => {
-    clearInterval(intervalRef.current);
     setTimerRunning(false);
     setTimerDisplay("00:00.00");
     setPenalties([]);
     setEliminatedObstacles([]);
-    javelinStartTimeRef.current = null;
+    setRawTime(0);
+    setPenaltyTime(0);
+    setTotalTime(0);
+    setJavelinTime(null);
     setJavelinTimerActive(false);
     setIsStopped(false);
   };
@@ -137,25 +155,16 @@ function CourseTimer({ userId, onSimulationSaved, onCancel }) {
   const handleSaveResults = async () => {
     setIsSaving(true);
     
-    const rawTime = startTimeRef.current ? (Date.now() - startTimeRef.current) / 1000 : 0;
-    const { totalPenaltySeconds, finalTotalSeconds } = calculateFinalTime(rawTime, penalties);
-    
-    let finalJavelinTime = null;
-    if (javelinTimerActive && javelinStartTimeRef.current) {
-      finalJavelinTime = (Date.now() - javelinStartTimeRef.current) / 1000;
-    }
-    setJavelinTimerActive(false);
-
     try {
       const token = localStorage.getItem('token');
       await axios.post(`${BACKEND_URL}/api/simulations`, {
         user: userId, 
         rawTime: rawTime,
-        penaltyTime: totalPenaltySeconds,
-        totalTime: finalTotalSeconds,
+        penaltyTime: penaltyTime,
+        totalTime: totalTime,
         penaltiesList: penalties,
         eliminatedObstaclesList: eliminatedObstacles,
-        javelinTime: finalJavelinTime,
+        javelinTime: javelinTime,
       }, {
         headers: {
           Authorization: `Bearer ${token}`
@@ -174,41 +183,9 @@ function CourseTimer({ userId, onSimulationSaved, onCancel }) {
     }
   };
   
-  useEffect(() => {
-    const rawTime = startTimeRef.current ? (Date.now() - startTimeRef.current) / 1000 : 0;
-    const { totalPenaltySeconds, finalTotalSeconds } = calculateFinalTime(rawTime, penalties);
-  
-    let javelinTime = null;
-    if (javelinTimerActive && javelinStartTimeRef.current) {
-        javelinTime = (Date.now() - javelinStartTimeRef.current) / 1000;
-    }
-
-    const update = () => {
-      document.getElementById('rawTimeDisplay').innerText = `Timp fără penalizări: ${formatTime(rawTime)}`;
-      document.getElementById('finalTimeDisplay').innerText = `Timp total cu penalizări: ${formatTime(finalTotalSeconds)}`;
-      document.getElementById('javelinTimeDisplay').innerText = `Timp Jaloane: ${javelinTime !== null ? formatTime(javelinTime) : (javelinTimerActive ? 'în curs...' : '-')}`;
-      document.getElementById('penaltyTimeDisplay').innerText = `Penalizări: ${penalties.length} x ${penaltySeconds}s = ${totalPenaltySeconds}s`;
-      document.getElementById('penaltyListDisplay').innerText = `Obstacole penalizate: ${penalties.join(', ') || 'Niciunul'}`;
-      document.getElementById('eliminatedListDisplay').innerText = `Obstacole eliminate: ${eliminatedObstacles.join(', ') || 'Niciunul'}`;
-    };
-  
-    update();
-  
-    let intervalId;
-    if (javelinTimerActive) {
-        intervalId = setInterval(update, 100);
-    }
-  
-    return () => clearInterval(intervalId);
-  
-  }, [penalties, eliminatedObstacles, javelinTimerActive, timerRunning]);
-  
-  
-  useEffect(() => {
-    return () => {
-      clearInterval(intervalRef.current);
-    };
-  }, []);
+  const handleJavelinTimeChange = (e) => {
+    setJavelinTime(parseFloat(e.target.value) || 0);
+  };
   
   return (
     <div className="bg-gradient-to-br from-blue-100 to-indigo-200 min-h-screen p-4 sm:p-6 font-sans antialiased flex items-center justify-center pt-24">
@@ -295,23 +272,47 @@ function CourseTimer({ userId, onSimulationSaved, onCancel }) {
             Rezultat Curent al Simulării:
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-800">
-            <p className="text-lg font-medium" id="rawTimeDisplay">
-              <span className="font-semibold text-blue-700">Timp fără penalizări:</span> -
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold text-blue-700 mb-1">Timp fără penalizări:</label>
+              <input
+                type="number"
+                step="0.01"
+                value={rawTime.toFixed(2)}
+                onChange={(e) => setRawTime(parseFloat(e.target.value))}
+                className="w-full p-2 rounded-lg border-2 border-gray-300 text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                readOnly={timerRunning}
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold text-blue-700 mb-1">Timp total cu penalizări:</label>
+              <input
+                type="number"
+                step="0.01"
+                value={totalTime.toFixed(2)}
+                onChange={(e) => setTotalTime(parseFloat(e.target.value))}
+                className="w-full p-2 rounded-lg border-2 border-gray-300 text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                readOnly={timerRunning}
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold text-blue-700 mb-1">Timp Jaloane:</label>
+              <input
+                type="number"
+                step="0.01"
+                value={javelinTime !== null ? javelinTime.toFixed(2) : ''}
+                onChange={(e) => setJavelinTime(parseFloat(e.target.value) || null)}
+                className="w-full p-2 rounded-lg border-2 border-gray-300 text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                readOnly={javelinTimerActive || timerRunning}
+              />
+            </div>
+            <p className="text-lg font-medium">
+              <span className="font-semibold text-blue-700">Penalizări:</span> {penalties.length} x {penaltySeconds}s = {penaltyTime}s
             </p>
-            <p className="text-lg font-medium" id="finalTimeDisplay">
-              <span className="font-semibold text-blue-700">Timp total cu penalizări:</span> -
+            <p className="text-lg font-medium col-span-1 md:col-span-2">
+              <span className="font-semibold text-blue-700">Obstacole penalizate:</span> {penalties.join(', ') || 'Niciunul'}
             </p>
-            <p className="text-lg font-medium" id="javelinTimeDisplay">
-              <span className="font-semibold text-blue-700">Timp Jaloane:</span> -
-            </p>
-            <p className="text-lg font-medium" id="penaltyTimeDisplay">
-              <span className="font-semibold text-blue-700">Penalizări:</span> -
-            </p>
-            <p className="text-lg font-medium col-span-1 md:col-span-2" id="penaltyListDisplay">
-              <span className="font-semibold text-blue-700">Obstacole penalizate:</span> -
-            </p>
-            <p className="text-lg font-medium col-span-1 md:col-span-2" id="eliminatedListDisplay">
-              <span className="font-semibold text-blue-700">Obstacole eliminate:</span> -
+            <p className="text-lg font-medium col-span-1 md:col-span-2">
+              <span className="font-semibold text-blue-700">Obstacole eliminate:</span> {eliminatedObstacles.join(', ') || 'Niciunul'}
             </p>
           </div>
         </div>
