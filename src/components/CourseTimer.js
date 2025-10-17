@@ -68,7 +68,6 @@ function CourseTimer({ userId, onSimulationSaved }) {
       return;
     }
     if (timerRunning) {
-      toast.warn("Cronometrul este deja pornit.");
       return;
     }
 
@@ -86,7 +85,6 @@ function CourseTimer({ userId, onSimulationSaved }) {
 
   const stopTimer = () => {
     if (!timerRunning) {
-      toast.error("Cronometrul nu este pornit.");
       return;
     }
     setTimerRunning(false);
@@ -108,15 +106,12 @@ function CourseTimer({ userId, onSimulationSaved }) {
 
   const addPenalty = (obstacle) => {
     if (!timerRunning && !isStopped) {
-      toast.error("Te rog să pornești sau să oprești cronometrul înainte de a adăuga penalizări.");
       return;
     }
     setPenalties(prevPenalties => {
         if (prevPenalties.includes(obstacle)) {
-            toast.info(`Penalizare pentru ${obstacle} a fost ștearsă.`);
             return prevPenalties.filter(item => item !== obstacle);
         } else {
-            toast.warn(`Penalizare adăugată pentru: ${obstacle}`);
             return [...prevPenalties, obstacle];
         }
     });
@@ -124,15 +119,12 @@ function CourseTimer({ userId, onSimulationSaved }) {
 
   const addEliminated = (obstacle) => {
     if (!timerRunning && !isStopped) {
-        toast.error("Te rog să pornești sau să oprești cronometrul înainte de a marca obstacole eliminate.");
         return;
     }
     setEliminatedObstacles(prevEliminated => {
         if (prevEliminated.includes(obstacle)) {
-            toast.info(`Obstacolul ${obstacle} nu mai este marcat ca eliminat.`);
             return prevEliminated.filter(item => item !== obstacle);
         } else {
-            toast.error(`Obstacol marcat ca eliminat: ${obstacle}`);
             return [...prevEliminated, obstacle];
         }
     });
@@ -140,16 +132,13 @@ function CourseTimer({ userId, onSimulationSaved }) {
 
   const startJavelinTimer = () => {
     if (!timerRunning) {
-      toast.error("Te rog să pornești cronometrul principal înainte de a măsura timpul jaloanelor.");
       return;
     }
     if (javelinTimerActive) {
-      toast.warn("Cronometrul pentru jaloane este deja pornit.");
       return;
     }
     javelinStartTimeRef.current = Date.now();
     setJavelinTimerActive(true);
-    toast.info("Cronometrul pentru jaloane a pornit!");
   };
 
   const handleSaveResults = async () => {
@@ -190,13 +179,16 @@ function CourseTimer({ userId, onSimulationSaved }) {
   return (
     <div className="bg-gradient-to-br from-blue-100 to-indigo-200 min-h-screen p-4 sm:p-6 font-sans antialiased flex flex-col items-center justify-start">
       
-      <div className="w-full bg-white rounded-b-2xl shadow-xl p-6 sm:p-8 space-y-6 transform transition-all duration-300 hover:shadow-2xl">
+      {/* HEADER FIX (Titlu) - Z-Index 10 */}
+      <div className="w-full bg-white rounded-b-2xl shadow-xl p-6 sm:p-8 space-y-6 z-10 sticky top-0">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-center text-blue-800 tracking-tight">
           Monitorizare Timp Traseu Aplicativ
         </h1>
       </div>
 
-      <div className="sticky top-0 z-50 w-full bg-white p-2 shadow-md rounded-b-lg -mt-8">
+      {/* CRONOMETRU STICKY (Levitant) - Z-Index 20 */}
+      {/* Am setat top-ul la o valoare care să-l oprească sub header-ul fix */}
+      <div className="sticky top-20 z-20 w-full max-w-5xl bg-white p-2 shadow-md rounded-b-lg -mt-8">
         <div className="text-center text-3xl font-extrabold text-blue-900 font-mono bg-blue-50 p-4 rounded-lg shadow-inner">
           {timerDisplay}
         </div>
@@ -218,6 +210,7 @@ function CourseTimer({ userId, onSimulationSaved }) {
         </div>
       </div>
       
+      {/* CONTINUT PRINCIPAL */}
       <div className="w-full max-w-5xl mx-auto space-y-6 mt-8">
         <div className="flex flex-col sm:flex-row justify-center gap-4 mb-8">
           <button
